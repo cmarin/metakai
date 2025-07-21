@@ -46,11 +46,28 @@ export function ModernControlPanel() {
         </div>
         
         <div className="pt-4 space-y-3">
-          <button className="w-full btn-primary">
+          <button 
+            onClick={() => {
+              // Trigger a re-render by updating a dummy control
+              updateControl('_trigger', Date.now())
+            }}
+            className="w-full btn-primary"
+          >
             Apply Filter
           </button>
           
-          <button className="w-full btn-secondary">
+          <button 
+            onClick={() => {
+              // Reset controls to defaults
+              controls.forEach(control => {
+                const defaultValue = control.type === 'slider' ? 50 : 
+                                   control.type === 'select' ? control.options?.[0]?.value : 
+                                   control.value
+                updateControl(control.id, defaultValue || control.value)
+              })
+            }}
+            className="w-full btn-secondary"
+          >
             Reset Settings
           </button>
         </div>

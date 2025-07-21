@@ -62,7 +62,14 @@ export function MobileControlDrawer() {
             </div>
             
             <div className="pt-4 space-y-3">
-              <button className="w-full btn-primary">
+              <button 
+                onClick={() => {
+                  // Trigger a re-render by updating a dummy control
+                  updateControl('_trigger', Date.now())
+                  setIsOpen(false)
+                }}
+                className="w-full btn-primary"
+              >
                 Apply Filter
               </button>
               
