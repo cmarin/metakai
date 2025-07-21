@@ -1,5 +1,6 @@
 import { useStore } from '../../store'
 import type { FilterType } from '../../types'
+import { handleImageFile, isImageFormatSupported } from '../../utils/imageHelpers'
 
 const filters: FilterType[] = [
   {
@@ -26,26 +27,65 @@ export function Toolbar() {
   const historyIndex = useStore((state) => state.filter.historyIndex)
   const historyLength = useStore((state) => state.filter.history.length)
   
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
     
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      const url = e.target?.result as string
+    // Reset input value to allow re-uploading same file
+    event.target.value = ''
+    
+    // Check file size (12MB limit)
+    if (file.size > 12 * 1024 * 1024) {
+      alert('File size must be less than 12MB')
+      return
+    }
+    
+    try {
+      // Handle HEIC and other formats
+      const dataUrl = await handleImageFile(file)
+      if (!dataUrl) return
+      
       const img = new Image()
+      
       img.onload = () => {
+        console.log('Image loaded successfully:', {
+          width: img.width,
+          height: img.height,
+          type: file.type,
+          name: file.name
+        })
+        
         useStore.getState().setImage({
-          url,
+          url: dataUrl,
           width: img.width,
           height: img.height,
           name: file.name,
-          type: file.type,
+          type: file.type || 'image/jpeg', // Default type if not provided
         })
       }
-      img.src = url
+      
+      img.onerror = (error) => {
+        console.error('Failed to load image:', error)
+        
+        // Check if it might be HEIC
+        const isHEIC = file.type === 'image/heic' || file.type === 'image/heif' || 
+                       file.name.toLowerCase().endsWith('.heic') || 
+                       file.name.toLowerCase().endsWith('.heif')
+        
+        if (isHEIC) {
+          alert('HEIC/HEIF images are not supported by your browser. Please use the Photos app on your iPhone to export as JPEG, or use an online converter.')
+        } else if (!isImageFormatSupported(file)) {
+          alert('This image format is not supported. Please use JPEG, PNG, WebP, or AVIF.')
+        } else {
+          alert('Failed to load image. The file may be corrupted or in an unsupported format.')
+        }
+      }
+      
+      img.src = dataUrl
+    } catch (error) {
+      console.error('Error handling file upload:', error)
+      alert('An error occurred while uploading the image.')
     }
-    reader.readAsDataURL(file)
   }
   
   return (
@@ -60,7 +100,7 @@ export function Toolbar() {
             <input
               type="file"
               id="file-upload"
-              accept="image/jpeg,image/png,image/webp,image/avif"
+              accept="image/jpeg,image/png,image/webp,image/avif,image/heic,image/heif"
               onChange={handleFileUpload}
               className="hidden"
             />
