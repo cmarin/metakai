@@ -169,5 +169,39 @@ describe('App Store', () => {
       expect(iterationsControl).toBeDefined()
       expect(iterationsControl?.type).toBe('slider')
     })
+    
+    it('should set materializer filter with correct controls', () => {
+      const { setActiveFilter } = useStore.getState()
+      const materializerFilter = {
+        id: 'materializer',
+        name: 'Materializer',
+        description: 'KPT-style metallic and material effects',
+      }
+      
+      setActiveFilter(materializerFilter)
+      
+      const state = useStore.getState()
+      expect(state.filter.activeFilter).toEqual(materializerFilter)
+      expect(state.filter.controls.length).toBe(4)
+      
+      const materialControl = state.filter.controls.find(c => c.id === 'material')
+      expect(materialControl).toBeDefined()
+      expect(materialControl?.type).toBe('select')
+      expect(materialControl?.options?.length).toBe(4)
+      expect(materialControl?.value).toBe('chrome')
+      
+      const reliefControl = state.filter.controls.find(c => c.id === 'relief')
+      expect(reliefControl).toBeDefined()
+      expect(reliefControl?.type).toBe('slider')
+      expect(reliefControl?.value).toBe(50)
+      
+      const shineControl = state.filter.controls.find(c => c.id === 'shine')
+      expect(shineControl).toBeDefined()
+      expect(shineControl?.value).toBe(70)
+      
+      const ambientControl = state.filter.controls.find(c => c.id === 'ambient')
+      expect(ambientControl).toBeDefined()
+      expect(ambientControl?.value).toBe(30)
+    })
   })
 })

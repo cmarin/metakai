@@ -85,6 +85,9 @@ export function InteractiveFilterDisplay() {
         case 'reaction':
           applyReactionFilter(ctx, canvas.width, canvas.height)
           break
+        case 'materializer':
+          applyMaterializerFilter(ctx, canvas.width, canvas.height)
+          break
       }
       
       // Store current state
@@ -678,6 +681,110 @@ export function InteractiveFilterDisplay() {
             }
           }
         }
+      }
+    }
+    
+    ctx.putImageData(newImageData, 0, 0)
+  }
+  
+  const applyMaterializerFilter = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
+    const material = controls.find(c => c.id === 'material')?.value || 'chrome'
+    const relief = (controls.find(c => c.id === 'relief')?.value as number) / 100 || 0.5
+    const shine = (controls.find(c => c.id === 'shine')?.value as number) / 100 || 0.7
+    const ambient = (controls.find(c => c.id === 'ambient')?.value as number) / 100 || 0.3
+    
+    const imageData = ctx.getImageData(0, 0, width, height)
+    const data = imageData.data
+    const newImageData = ctx.createImageData(width, height)
+    const newData = newImageData.data
+    
+    // Create height map from luminance
+    const heightMap = new Float32Array(width * height)
+    for (let i = 0; i < data.length; i += 4) {
+      const idx = i / 4
+      const luminance = (data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114) / 255
+      heightMap[idx] = luminance
+    }
+    
+    // Apply material effect
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const idx = (y * width + x) * 4
+        const pixelIdx = y * width + x
+        
+        // Calculate surface normals from height map
+        let nx = 0, ny = 0
+        if (x > 0 && x < width - 1) {
+          nx = (heightMap[pixelIdx + 1] - heightMap[pixelIdx - 1]) * relief * 10
+        }
+        if (y > 0 && y < height - 1) {
+          ny = (heightMap[pixelIdx + width] - heightMap[pixelIdx - width]) * relief * 10
+        }
+        
+        // Normalize the normal vector
+        const nz = 1
+        const length = Math.sqrt(nx * nx + ny * ny + nz * nz)
+        nx /= length
+        ny /= length
+        const normalZ = nz / length
+        
+        // Light direction (from top-right)
+        const lightX = 0.577
+        const lightY = -0.577
+        const lightZ = 0.577
+        
+        // Calculate diffuse lighting
+        const diffuse = Math.max(0, nx * lightX + ny * lightY + normalZ * lightZ)
+        
+        // Calculate specular highlight
+        const viewZ = 1
+        const halfX = lightX
+        const halfY = lightY
+        const halfZ = (lightZ + viewZ) / 2
+        const specularPower = material === 'chrome' ? 32 : material === 'gold' ? 16 : material === 'copper' ? 24 : 64
+        const specular = Math.pow(Math.max(0, nx * halfX + ny * halfY + normalZ * halfZ), specularPower) * shine
+        
+        // Material colors
+        let materialR = 1, materialG = 1, materialB = 1
+        
+        switch (material) {
+          case 'chrome':
+            // Chrome: silvery with blue tint
+            materialR = 0.9
+            materialG = 0.9
+            materialB = 0.95
+            break
+          case 'gold':
+            // Gold: warm yellow metallic
+            materialR = 1.0
+            materialG = 0.84
+            materialB = 0.0
+            break
+          case 'copper':
+            // Copper: reddish-brown metallic
+            materialR = 0.95
+            materialG = 0.64
+            materialB = 0.54
+            break
+          case 'steel':
+            // Steel: darker silver
+            materialR = 0.7
+            materialG = 0.7
+            materialB = 0.75
+            break
+        }
+        
+        // Apply lighting model
+        const lighting = ambient + diffuse * (1 - ambient)
+        const highlight = specular * 255
+        
+        // Blend original color with material
+        const originalLuminance = (data[idx] * 0.299 + data[idx + 1] * 0.587 + data[idx + 2] * 0.114) / 255
+        
+        newData[idx] = Math.min(255, originalLuminance * materialR * lighting * 255 + highlight)
+        newData[idx + 1] = Math.min(255, originalLuminance * materialG * lighting * 255 + highlight * 0.95)
+        newData[idx + 2] = Math.min(255, originalLuminance * materialB * lighting * 255 + highlight * 0.9)
+        newData[idx + 3] = data[idx + 3]
       }
     }
     

@@ -28,6 +28,11 @@ const filters: FilterType[] = [
     name: 'Reaction',
     description: 'Fractal flame patterns',
   },
+  {
+    id: 'materializer',
+    name: 'Materializer',
+    description: 'KPT-style metallic and material effects',
+  },
 ]
 
 export function ModernToolbar() {
