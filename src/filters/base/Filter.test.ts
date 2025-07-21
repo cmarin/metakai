@@ -20,7 +20,7 @@ class TestFilter extends Filter {
     return [
       {
         id: 'intensity',
-        name: 'Intensity',
+        label: 'Intensity',
         type: 'slider',
         value: 50,
         min: 0,
@@ -29,7 +29,7 @@ class TestFilter extends Filter {
       },
       {
         id: 'mode',
-        name: 'Mode',
+        label: 'Mode',
         type: 'select',
         value: 'normal',
         options: [
@@ -41,7 +41,7 @@ class TestFilter extends Filter {
   }
   
   createFilter(): PixiFilter {
-    return new PixiFilter() as any
+    return new (PixiFilter as any)() as any
   }
   
   protected updateFilter(): void {
