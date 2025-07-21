@@ -354,58 +354,106 @@ export function InteractiveFilterDisplay() {
     const data = imageData.data
     const newImageData = ctx.createImageData(width, height)
     const newData = newImageData.data
-    const depth = (controls.find(c => c.id === 'depth')?.value as number) / 100 || 0.5
-    const viscosity = (controls.find(c => c.id === 'viscosity')?.value as number) / 100 || 0.5
     
-    // Enhanced glass/metal effect with environment mapping simulation
+    // Get control values
+    const material = controls.find(c => c.id === 'material')?.value || 'glass'
+    const lensSize = (controls.find(c => c.id === 'lensSize')?.value as number) / 100 || 0.5
+    const refraction = (controls.find(c => c.id === 'refraction')?.value as number) / 100 || 0.3
+    const reflection = (controls.find(c => c.id === 'reflection')?.value as number) / 100 || 0.2
+    
+    const centerX = width / 2
+    const centerY = height / 2
+    const maxRadius = Math.min(width, height) * lensSize * 0.5
+    
+    // Copy original data first
+    for (let i = 0; i < data.length; i++) {
+      newData[i] = data[i]
+    }
+    
+    // KPT Glass Lens effect
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
         const idx = (y * width + x) * 4
         
-        // Calculate surface normal based on brightness gradients
-        let dx = 0, dy = 0
-        if (x > 0 && x < width - 1) {
-          const leftIdx = (y * width + (x - 1)) * 4
-          const rightIdx = (y * width + (x + 1)) * 4
-          dx = (data[rightIdx] - data[leftIdx]) / 255
+        // Calculate distance from center
+        const dx = x - centerX
+        const dy = y - centerY
+        const dist = Math.sqrt(dx * dx + dy * dy)
+        
+        if (dist < maxRadius) {
+          // Calculate lens curvature
+          const normalizedDist = dist / maxRadius
+          const z = Math.sqrt(Math.max(0, 1 - normalizedDist * normalizedDist))
+          
+          // Calculate refraction based on lens curvature
+          const refractionStrength = refraction * z
+          const angle = Math.atan2(dy, dx)
+          
+          // Calculate source position with lens distortion
+          let sourceX = x
+          let sourceY = y
+          
+          if (material === 'glass') {
+            // Glass lens refraction - bends light through the lens
+            const bendFactor = 1 - normalizedDist * refractionStrength
+            sourceX = centerX + dx * bendFactor
+            sourceY = centerY + dy * bendFactor
+            
+            // Add subtle chromatic aberration
+            const chromaticShift = refractionStrength * 2
+            const rSourceX = centerX + dx * (bendFactor - chromaticShift * 0.01)
+            const bSourceX = centerX + dx * (bendFactor + chromaticShift * 0.01)
+            
+            // Sample with bounds checking
+            const rX = Math.max(0, Math.min(width - 1, Math.round(rSourceX)))
+            const bX = Math.max(0, Math.min(width - 1, Math.round(bSourceX)))
+            const sY = Math.max(0, Math.min(height - 1, Math.round(sourceY)))
+            
+            const rIdx = (sY * width + rX) * 4
+            const bIdx = (sY * width + bX) * 4
+            const gIdx = (sY * width + Math.round(sourceX)) * 4
+            
+            // Apply refracted colors
+            newData[idx] = data[rIdx]
+            newData[idx + 1] = data[gIdx + 1]
+            newData[idx + 2] = data[bIdx + 2]
+            
+          } else if (material === 'sphere') {
+            // Spherical lens - stronger distortion
+            const sphereFactor = Math.pow(z, 0.5)
+            sourceX = centerX + dx / (1 + refractionStrength * sphereFactor * 2)
+            sourceY = centerY + dy / (1 + refractionStrength * sphereFactor * 2)
+            
+          } else if (material === 'water') {
+            // Water drop effect - ripple distortion
+            const ripple = Math.sin(normalizedDist * Math.PI * 3) * refractionStrength
+            sourceX = x + Math.cos(angle) * ripple * maxRadius * 0.1
+            sourceY = y + Math.sin(angle) * ripple * maxRadius * 0.1
+          }
+          
+          // Sample from source position for non-glass materials
+          if (material !== 'glass') {
+            sourceX = Math.max(0, Math.min(width - 1, Math.round(sourceX)))
+            sourceY = Math.max(0, Math.min(height - 1, Math.round(sourceY)))
+            const sourceIdx = (sourceY * width + sourceX) * 4
+            
+            newData[idx] = data[sourceIdx]
+            newData[idx + 1] = data[sourceIdx + 1]
+            newData[idx + 2] = data[sourceIdx + 2]
+          }
+          
+          // Add subtle reflection/highlight
+          if (reflection > 0) {
+            const highlightStrength = Math.pow(z, 3) * reflection * 255
+            const edgeHighlight = Math.pow(1 - normalizedDist, 8) * reflection * 128
+            
+            newData[idx] = Math.min(255, newData[idx] + highlightStrength + edgeHighlight)
+            newData[idx + 1] = Math.min(255, newData[idx + 1] + highlightStrength + edgeHighlight)
+            newData[idx + 2] = Math.min(255, newData[idx + 2] + highlightStrength + edgeHighlight)
+          }
         }
-        if (y > 0 && y < height - 1) {
-          const topIdx = ((y - 1) * width + x) * 4
-          const bottomIdx = ((y + 1) * width + x) * 4
-          dy = (data[bottomIdx] - data[topIdx]) / 255
-        }
         
-        // Calculate reflection based on surface normal
-        const normalLength = Math.sqrt(dx * dx + dy * dy + 1)
-        const nx = dx / normalLength
-        const ny = dy / normalLength
-        const nz = 1 / normalLength
-        
-        // Simulate environment reflection
-        const reflectionAngle = Math.atan2(ny, nx)
-        const reflectionIntensity = nz * depth
-        
-        // Create metallic/glass highlights
-        const brightness = (data[idx] + data[idx + 1] + data[idx + 2]) / 3
-        const highlight = Math.pow(brightness / 255, 0.5 - viscosity) * reflectionIntensity * 200
-        const specular = Math.pow(nz, 8 - viscosity * 7) * 255 * depth
-        
-        // Apply chromatic aberration for glass effect
-        const chromaticShift = depth * 5
-        const rShift = Math.sin(reflectionAngle) * chromaticShift
-        const bShift = Math.cos(reflectionAngle) * chromaticShift
-        
-        // Sample colors with chromatic shift
-        const rIdx = Math.max(0, Math.min(width - 1, x + Math.round(rShift)))
-        const bIdx = Math.max(0, Math.min(width - 1, x + Math.round(bShift)))
-        const rSampleIdx = (y * width + rIdx) * 4
-        const bSampleIdx = (y * width + bIdx) * 4
-        
-        // Combine original color with reflections and highlights
-        newData[idx] = Math.min(255, data[rSampleIdx] * (1 - depth * 0.3) + highlight + specular)
-        newData[idx + 1] = Math.min(255, data[idx + 1] * (1 - depth * 0.3) + highlight * 0.9 + specular * 0.9)
-        newData[idx + 2] = Math.min(255, data[bSampleIdx + 2] * (1 - depth * 0.3) + highlight * 0.8 + specular * 0.8)
-        newData[idx + 3] = data[idx + 3]
+        newData[idx + 3] = data[idx + 3] // Preserve alpha
       }
     }
     

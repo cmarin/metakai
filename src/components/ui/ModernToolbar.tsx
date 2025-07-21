@@ -15,8 +15,8 @@ const filters: FilterType[] = [
   },
   {
     id: 'gel-paint',
-    name: 'Gel Paint',
-    description: '3D paint effects',
+    name: 'Glass Lens',
+    description: 'KPT-style glass lens effects',
   },
   {
     id: 'projection',

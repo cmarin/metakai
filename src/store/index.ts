@@ -127,13 +127,14 @@ function getDefaultControls(filterId: string): FilterControl[] {
       ]
     case 'gel-paint':
       return [
-        { id: 'material', type: 'select', label: 'Material', value: 'glass', options: [
-          { label: 'Metal', value: 'metal' },
+        { id: 'material', type: 'select', label: 'Lens Type', value: 'glass', options: [
           { label: 'Glass', value: 'glass' },
-          { label: 'Liquid', value: 'liquid' },
+          { label: 'Sphere', value: 'sphere' },
+          { label: 'Water', value: 'water' },
         ]},
-        { id: 'depth', type: 'slider', label: 'Depth', min: 0, max: 100, value: 50 },
-        { id: 'viscosity', type: 'slider', label: 'Viscosity', min: 0, max: 100, value: 50 },
+        { id: 'lensSize', type: 'slider', label: 'Lens Size', min: 10, max: 100, value: 50 },
+        { id: 'refraction', type: 'slider', label: 'Refraction', min: 0, max: 100, value: 30 },
+        { id: 'reflection', type: 'slider', label: 'Reflection', min: 0, max: 50, value: 20 },
       ]
     case 'projection':
       return [

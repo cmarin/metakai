@@ -36,7 +36,7 @@ describe('ModernToolbar', () => {
     
     expect(screen.getByRole('button', { name: 'Liquify' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Convolve' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Gel Paint' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Glass Lens' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Projection' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Reaction' })).toBeInTheDocument()
   })
