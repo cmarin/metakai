@@ -263,26 +263,27 @@ export function InteractiveFilterDisplay() {
     const preset = controls.find(c => c.id === 'preset')?.value || 'sharpen'
     const intensity = (controls.find(c => c.id === 'intensity')?.value as number) / 100 || 0.5
     
+    // Enhanced kernels with stronger effects
     const kernels: Record<string, number[][]> = {
       sharpen: [
-        [0, -1, 0],
-        [-1, 5, -1],
-        [0, -1, 0]
-      ],
-      blur: [
-        [1/9, 1/9, 1/9],
-        [1/9, 1/9, 1/9],
-        [1/9, 1/9, 1/9]
-      ],
-      edge: [
         [-1, -1, -1],
-        [-1, 8, -1],
+        [-1, 9, -1],
         [-1, -1, -1]
       ],
+      blur: [
+        [1/16, 2/16, 1/16],
+        [2/16, 4/16, 2/16],
+        [1/16, 2/16, 1/16]
+      ],
+      edge: [
+        [-2, -2, -2],
+        [-2, 16, -2],
+        [-2, -2, -2]
+      ],
       emboss: [
-        [-2, -1, 0],
-        [-1, 1, 1],
-        [0, 1, 2]
+        [-4, -2, 0],
+        [-2, 1, 2],
+        [0, 2, 4]
       ]
     }
     
@@ -292,7 +293,7 @@ export function InteractiveFilterDisplay() {
     const newImageData = ctx.createImageData(width, height)
     const newData = newImageData.data
     
-    // Apply convolution
+    // Apply convolution with enhanced intensity
     for (let y = 1; y < height - 1; y++) {
       for (let x = 1; x < width - 1; x++) {
         let r = 0, g = 0, b = 0
@@ -310,10 +311,19 @@ export function InteractiveFilterDisplay() {
         
         const idx = (y * width + x) * 4
         
-        // Mix with original based on intensity
-        newData[idx] = Math.min(255, Math.max(0, data[idx] * (1 - intensity) + r * intensity))
-        newData[idx + 1] = Math.min(255, Math.max(0, data[idx + 1] * (1 - intensity) + g * intensity))
-        newData[idx + 2] = Math.min(255, Math.max(0, data[idx + 2] * (1 - intensity) + b * intensity))
+        // Enhanced intensity application for more pronounced effects
+        const enhancedIntensity = Math.min(1, intensity * 1.5)
+        
+        if (preset === 'edge') {
+          // For edge detection, use absolute values for more visible edges
+          r = Math.abs(r)
+          g = Math.abs(g)
+          b = Math.abs(b)
+        }
+        
+        newData[idx] = Math.min(255, Math.max(0, data[idx] * (1 - enhancedIntensity) + r * enhancedIntensity))
+        newData[idx + 1] = Math.min(255, Math.max(0, data[idx + 1] * (1 - enhancedIntensity) + g * enhancedIntensity))
+        newData[idx + 2] = Math.min(255, Math.max(0, data[idx + 2] * (1 - enhancedIntensity) + b * enhancedIntensity))
         newData[idx + 3] = data[idx + 3]
       }
     }
@@ -336,20 +346,64 @@ export function InteractiveFilterDisplay() {
   const applyGelPaintFilter = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
     const imageData = ctx.getImageData(0, 0, width, height)
     const data = imageData.data
+    const newImageData = ctx.createImageData(width, height)
+    const newData = newImageData.data
     const depth = (controls.find(c => c.id === 'depth')?.value as number) / 100 || 0.5
     const viscosity = (controls.find(c => c.id === 'viscosity')?.value as number) / 100 || 0.5
     
-    // Create highlight layer
-    for (let i = 0; i < data.length; i += 4) {
-      const brightness = (data[i] + data[i + 1] + data[i + 2]) / 3
-      const highlight = Math.pow(brightness / 255, 1 - viscosity) * depth * 128
-      
-      data[i] = Math.min(255, data[i] + highlight)
-      data[i + 1] = Math.min(255, data[i + 1] + highlight)
-      data[i + 2] = Math.min(255, data[i + 2] + highlight)
+    // Enhanced glass/metal effect with environment mapping simulation
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const idx = (y * width + x) * 4
+        
+        // Calculate surface normal based on brightness gradients
+        let dx = 0, dy = 0
+        if (x > 0 && x < width - 1) {
+          const leftIdx = (y * width + (x - 1)) * 4
+          const rightIdx = (y * width + (x + 1)) * 4
+          dx = (data[rightIdx] - data[leftIdx]) / 255
+        }
+        if (y > 0 && y < height - 1) {
+          const topIdx = ((y - 1) * width + x) * 4
+          const bottomIdx = ((y + 1) * width + x) * 4
+          dy = (data[bottomIdx] - data[topIdx]) / 255
+        }
+        
+        // Calculate reflection based on surface normal
+        const normalLength = Math.sqrt(dx * dx + dy * dy + 1)
+        const nx = dx / normalLength
+        const ny = dy / normalLength
+        const nz = 1 / normalLength
+        
+        // Simulate environment reflection
+        const reflectionAngle = Math.atan2(ny, nx)
+        const reflectionIntensity = nz * depth
+        
+        // Create metallic/glass highlights
+        const brightness = (data[idx] + data[idx + 1] + data[idx + 2]) / 3
+        const highlight = Math.pow(brightness / 255, 0.5 - viscosity) * reflectionIntensity * 200
+        const specular = Math.pow(nz, 8 - viscosity * 7) * 255 * depth
+        
+        // Apply chromatic aberration for glass effect
+        const chromaticShift = depth * 5
+        const rShift = Math.sin(reflectionAngle) * chromaticShift
+        const bShift = Math.cos(reflectionAngle) * chromaticShift
+        
+        // Sample colors with chromatic shift
+        const rIdx = Math.max(0, Math.min(width - 1, x + Math.round(rShift)))
+        const bIdx = Math.max(0, Math.min(width - 1, x + Math.round(bShift)))
+        const rSampleIdx = (y * width + rIdx) * 4
+        const bSampleIdx = (y * width + bIdx) * 4
+        
+        // Combine original color with reflections and highlights
+        newData[idx] = Math.min(255, data[rSampleIdx] * (1 - depth * 0.3) + highlight + specular)
+        newData[idx + 1] = Math.min(255, data[idx + 1] * (1 - depth * 0.3) + highlight * 0.9 + specular * 0.9)
+        newData[idx + 2] = Math.min(255, data[bSampleIdx + 2] * (1 - depth * 0.3) + highlight * 0.8 + specular * 0.8)
+        newData[idx + 3] = data[idx + 3]
+      }
     }
     
-    ctx.putImageData(imageData, 0, 0)
+    ctx.putImageData(newImageData, 0, 0)
   }
   
   if (!image) {
