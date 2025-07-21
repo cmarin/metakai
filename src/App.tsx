@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Canvas } from './components/workspace/Canvas'
 import { Toolbar } from './components/ui/Toolbar'
 import { ControlPanel } from './components/ui/ControlPanel'
+import { ZoomControls } from './components/workspace/ZoomControls'
 import { useStore } from './store'
 import './App.css'
 
@@ -45,6 +46,7 @@ function App() {
       <div className="flex-1 flex overflow-hidden">
         <div className="flex-1 relative">
           <Canvas />
+          <ZoomControls />
         </div>
         
         <ControlPanel />

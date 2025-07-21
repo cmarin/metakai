@@ -82,10 +82,23 @@ A device-agnostic, browser-based image manipulation playground that reimagines c
 4. **Apply the filter** and use undo/redo as needed
 5. **Export your result** (feature in development)
 
+### Navigation Controls
+- **Pan**: Click and drag on the canvas to move the image
+- **Zoom**: Use mouse wheel or pinch gestures on touch devices
+- **Zoom buttons**: Use the zoom controls in the bottom-right corner
+- **Reset view**: Click the reset button to return to original position
+
 ### Supported Image Formats
 - JPEG, PNG, WebP, AVIF
 - Maximum file size: 12MB
 - Auto-orientation based on EXIF data
+
+#### iPhone/HEIC Support
+HEIC/HEIF images from iPhones are not natively supported by web browsers. To use photos from your iPhone:
+1. Change your iPhone camera settings to capture in JPEG format (Settings → Camera → Formats → Most Compatible)
+2. Export as JPEG from the Photos app before uploading
+3. Use an online HEIC to JPEG converter
+4. The app will detect HEIC files and provide guidance
 
 ## Project Structure
 
