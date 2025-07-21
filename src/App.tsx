@@ -1,8 +1,7 @@
 import { useEffect } from 'react'
-import { ImageDisplay } from './components/workspace/ImageDisplay'
+import { SafeImageDisplay } from './components/workspace/SafeImageDisplay'
 import { ModernToolbar } from './components/ui/ModernToolbar'
 import { ModernControlPanel } from './components/ui/ModernControlPanel'
-import { ModernZoomControls } from './components/workspace/ModernZoomControls'
 import { MobileControlDrawer } from './components/ui/MobileControlDrawer'
 import { useStore } from './store'
 import './App.css'
@@ -25,8 +24,7 @@ function App() {
       
       <main className="flex-1 flex overflow-hidden">
         <div className="flex-1 relative bg-gray-100 dark:bg-gray-900">
-          <ImageDisplay />
-          <ModernZoomControls />
+          <SafeImageDisplay />
         </div>
         
         <ModernControlPanel />

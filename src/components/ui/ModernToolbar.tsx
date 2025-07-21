@@ -31,60 +31,27 @@ export function ModernToolbar() {
   }
   
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) {
-      console.log('No file selected')
-      return
-    }
-    
-    console.log('File selected:', {
-      name: file.name,
-      type: file.type,
-      size: file.size
-    })
-    
-    // Create object URL for immediate display
-    const url = URL.createObjectURL(file)
-    console.log('Created object URL:', url)
-    
-    // Load image to get dimensions
-    const img = new Image()
-    img.onload = () => {
-      console.log('Image loaded successfully:', {
-        name: file.name,
-        width: img.width,
-        height: img.height,
-        url: url
-      })
+    try {
+      const file = e.target.files?.[0]
+      if (!file) return
       
-      // Set the image in the store
-      const imageData = {
+      // Create object URL for immediate display
+      const url = URL.createObjectURL(file)
+      
+      // Set the image directly without loading it first
+      setImage({
         url,
-        width: img.width,
-        height: img.height,
+        width: 0,
+        height: 0,
         name: file.name,
         type: file.type || 'image/jpeg'
-      }
+      })
       
-      console.log('Setting image in store:', imageData)
-      setImage(imageData)
-      
-      // Also reset zoom/pan when new image loads
-      useStore.getState().setZoom(1)
-      useStore.getState().setPan({ x: 0, y: 0 })
+      // Reset input
+      e.target.value = ''
+    } catch (error) {
+      alert('Failed to load image. Please try again.')
     }
-    
-    img.onerror = (error) => {
-      console.error('Failed to load image:', error)
-      alert('Failed to load image. Please try a JPEG or PNG file.')
-      URL.revokeObjectURL(url)
-    }
-    
-    console.log('Setting img.src to:', url)
-    img.src = url
-    
-    // Reset input to allow same file selection
-    e.target.value = ''
   }
   
   return (
