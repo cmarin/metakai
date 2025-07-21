@@ -5,6 +5,7 @@ interface AppState {
   workspace: WorkspaceState
   filter: FilterState
   theme: 'light' | 'dark'
+  mobileDrawerOpen: boolean
   
   // Workspace actions
   setImage: (image: ImageData | null) => void
@@ -19,6 +20,9 @@ interface AppState {
   
   // Theme actions
   toggleTheme: () => void
+  
+  // UI actions
+  setMobileDrawerOpen: (open: boolean) => void
 }
 
 export const useStore = create<AppState>((set) => ({
@@ -37,6 +41,7 @@ export const useStore = create<AppState>((set) => ({
   },
   
   theme: 'light',
+  mobileDrawerOpen: false,
   
   setImage: (image) => set((state) => ({
     workspace: { ...state.workspace, image }
@@ -90,6 +95,10 @@ export const useStore = create<AppState>((set) => ({
   toggleTheme: () => set((state) => ({
     theme: state.theme === 'light' ? 'dark' : 'light'
   })),
+  
+  setMobileDrawerOpen: (open) => set(() => ({
+    mobileDrawerOpen: open
+  })),
 }))
 
 function getDefaultControls(filterId: string): FilterControl[] {
@@ -125,6 +134,30 @@ function getDefaultControls(filterId: string): FilterControl[] {
         ]},
         { id: 'depth', type: 'slider', label: 'Depth', min: 0, max: 100, value: 50 },
         { id: 'viscosity', type: 'slider', label: 'Viscosity', min: 0, max: 100, value: 50 },
+      ]
+    case 'projection':
+      return [
+        { id: 'type', type: 'select', label: 'Projection Type', value: 'sphere', options: [
+          { label: 'Sphere', value: 'sphere' },
+          { label: 'Cylinder', value: 'cylinder' },
+          { label: 'Cone', value: 'cone' },
+          { label: 'Plane', value: 'plane' },
+        ]},
+        { id: 'fov', type: 'slider', label: 'Field of View', min: 10, max: 180, value: 90 },
+        { id: 'rotation', type: 'slider', label: 'Rotation', min: 0, max: 360, value: 0 },
+        { id: 'distortion', type: 'slider', label: 'Distortion', min: 0, max: 100, value: 50 },
+      ]
+    case 'reaction':
+      return [
+        { id: 'pattern', type: 'select', label: 'Pattern', value: 'flame', options: [
+          { label: 'Flame', value: 'flame' },
+          { label: 'Electric', value: 'electric' },
+          { label: 'Organic', value: 'organic' },
+          { label: 'Crystal', value: 'crystal' },
+        ]},
+        { id: 'iterations', type: 'slider', label: 'Iterations', min: 1, max: 10, value: 3 },
+        { id: 'scale', type: 'slider', label: 'Scale', min: 10, max: 200, value: 100 },
+        { id: 'chaos', type: 'slider', label: 'Chaos', min: 0, max: 100, value: 50 },
       ]
     default:
       return []
