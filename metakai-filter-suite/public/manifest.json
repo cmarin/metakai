@@ -1,0 +1,40 @@
+{
+  "name": "Metakai Filter Suite",
+  "short_name": "Metakai",
+  "description": "Web-based creative filter suite for real-time image manipulation",
+  "theme_color": "#1a1a1a",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "orientation": "portrait",
+  "scope": "/",
+  "start_url": "/",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["photo", "graphics", "creativity"],
+  "shortcuts": [
+    {
+      "name": "Liquify",
+      "short_name": "Liquify",
+      "description": "Liquid distortion effects",
+      "url": "/?filter=liquify"
+    },
+    {
+      "name": "Convolve",
+      "short_name": "Convolve",
+      "description": "Mathematical filters",
+      "url": "/?filter=convolve"
+    }
+  ]
+}
