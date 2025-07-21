@@ -56,4 +56,14 @@
     @apply w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer 
            dark:bg-gray-700 accent-blue-600;
   }
+  
+  /* Hide scrollbar but keep functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;  /* Chrome, Safari and Opera */
+  }
 }

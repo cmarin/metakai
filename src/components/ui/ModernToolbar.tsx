@@ -98,20 +98,30 @@ export function ModernToolbar() {
           </div>
           
             {/* Filters */}
-            <div className="flex items-center gap-2 overflow-x-auto">
-              {filters.map((filter) => (
-                <button
-                  key={filter.id}
-                  onClick={() => setActiveFilter(filter)}
-                  className={`filter-btn whitespace-nowrap ${
-                    activeFilter?.id === filter.id
-                      ? 'filter-btn-active'
-                      : 'filter-btn-inactive'
-                  }`}
-                >
-                  {filter.name}
-                </button>
-              ))}
+            <div className="w-full">
+              <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-2 
+                              snap-x snap-mandatory touch-pan-x"
+                   style={{ 
+                     WebkitOverflowScrolling: 'touch',
+                     scrollbarWidth: 'none',
+                     msOverflowStyle: 'none' 
+                   }}>
+                {filters.map((filter) => (
+                  <button
+                    key={filter.id}
+                    onClick={() => setActiveFilter(filter)}
+                    className={`filter-btn whitespace-nowrap flex-shrink-0 snap-center ${
+                      activeFilter?.id === filter.id
+                        ? 'filter-btn-active'
+                        : 'filter-btn-inactive'
+                    }`}
+                  >
+                    {filter.name}
+                  </button>
+                ))}
+                {/* Add padding at the end for better scrolling */}
+                <div className="w-4 flex-shrink-0" />
+              </div>
             </div>
           </div>
           
