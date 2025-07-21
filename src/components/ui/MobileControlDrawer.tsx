@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useStore } from '../../store'
 import type { FilterControl } from '../../types'
+import { TouchSlider } from './TouchSlider'
 
 export function MobileControlDrawer() {
   const [isOpen, setIsOpen] = useState(false)
@@ -105,13 +106,12 @@ function Control({ control, onChange }: ControlProps) {
               {control.value}
             </span>
           </div>
-          <input
-            type="range"
-            min={control.min}
-            max={control.max}
-            step={control.step}
-            value={control.value}
-            onChange={(e) => onChange(Number(e.target.value))}
+          <TouchSlider
+            min={control.min || 0}
+            max={control.max || 100}
+            step={control.step || 1}
+            value={control.value as number}
+            onChange={onChange}
             className="control-slider"
           />
         </div>

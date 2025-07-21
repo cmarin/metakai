@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { FilteredImageDisplay } from './components/workspace/FilteredImageDisplay'
+import { InteractiveFilterDisplay } from './components/workspace/InteractiveFilterDisplay'
 import { ModernToolbar } from './components/ui/ModernToolbar'
 import { ModernControlPanel } from './components/ui/ModernControlPanel'
 import { MobileControlDrawer } from './components/ui/MobileControlDrawer'
@@ -24,7 +24,7 @@ function App() {
       
       <main className="flex-1 flex overflow-hidden">
         <div className="flex-1 relative bg-gray-100 dark:bg-gray-900">
-          <FilteredImageDisplay />
+          <InteractiveFilterDisplay />
         </div>
         
         <ModernControlPanel />
