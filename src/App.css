@@ -1,3 +1,59 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  * {
+    @apply box-border;
+  }
+  
+  body {
+    @apply antialiased;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium rounded-xl
+           hover:from-blue-700 hover:to-blue-800 transform transition-all duration-200
+           active:scale-95 shadow-sm hover:shadow-md;
+  }
+  
+  .btn-secondary {
+    @apply px-4 py-2.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 font-medium 
+           rounded-xl border border-gray-200 dark:border-gray-700
+           hover:bg-gray-50 dark:hover:bg-gray-700 transform transition-all duration-200
+           active:scale-95 shadow-sm;
+  }
+  
+  .btn-icon {
+    @apply p-2.5 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 
+           rounded-xl border border-gray-200 dark:border-gray-700
+           hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white
+           transform transition-all duration-200 active:scale-95;
+  }
+  
+  .filter-btn {
+    @apply px-5 py-2.5 font-medium rounded-xl transition-all duration-200 transform
+           hover:scale-105 active:scale-95;
+  }
+  
+  .filter-btn-active {
+    @apply bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md;
+  }
+  
+  .filter-btn-inactive {
+    @apply bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 
+           border border-gray-200 dark:border-gray-700
+           hover:border-gray-300 dark:hover:border-gray-600;
+  }
+  
+  .control-label {
+    @apply text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block;
+  }
+  
+  .control-slider {
+    @apply w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer 
+           dark:bg-gray-700 accent-blue-600;
+  }
+}
