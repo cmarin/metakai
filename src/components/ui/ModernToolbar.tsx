@@ -38,6 +38,11 @@ const filters: FilterType[] = [
     name: 'Fractal',
     description: 'Julia and Mandelbrot fractal patterns',
   },
+  {
+    id: 'morphapp',
+    name: 'MorphApp',
+    description: 'Morph between two images to create videos',
+  },
 ]
 
 export function ModernToolbar() {
