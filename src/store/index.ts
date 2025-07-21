@@ -201,7 +201,7 @@ function getDefaultControls(filterId: string): FilterControl[] {
         ]},
         { id: 'opacity', type: 'slider', label: 'Opacity', min: 0, max: 100, value: 100 },
       ]
-    case 'morphapp':
+    case 'morph':
       return [
         { id: 'morphAmount', type: 'slider', label: 'Morph Amount', min: 0, max: 100, value: 0 },
         { id: 'frames', type: 'number', label: 'Total Frames', min: 10, max: 120, value: 30 },

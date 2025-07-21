@@ -39,8 +39,8 @@ const filters: FilterType[] = [
     description: 'Julia and Mandelbrot fractal patterns',
   },
   {
-    id: 'morphapp',
-    name: 'MorphApp',
+    id: 'morph',
+    name: 'Morph',
     description: 'Morph between two images to create videos',
   },
 ]
