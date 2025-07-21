@@ -203,5 +203,53 @@ describe('App Store', () => {
       expect(ambientControl).toBeDefined()
       expect(ambientControl?.value).toBe(30)
     })
+
+    it('should set fractal filter with correct controls', () => {
+      const state = useStore.getState()
+      const fractalFilter = {
+        id: 'fractal',
+        name: 'Fractal',
+        description: 'Julia and Mandelbrot fractal patterns'
+      }
+      
+      state.setActiveFilter(fractalFilter)
+      
+      // Get updated state
+      const newState = useStore.getState()
+      
+      expect(newState.filter.activeFilter).toEqual(fractalFilter)
+      expect(newState.filter.controls.length).toBe(6)
+      
+      const fractalTypeControl = newState.filter.controls.find(c => c.id === 'fractalType')
+      expect(fractalTypeControl).toBeDefined()
+      expect(fractalTypeControl?.type).toBe('select')
+      expect(fractalTypeControl?.options?.length).toBe(5)
+      expect(fractalTypeControl?.value).toBe('julia')
+      
+      const zoomControl = newState.filter.controls.find(c => c.id === 'zoom')
+      expect(zoomControl).toBeDefined()
+      expect(zoomControl?.type).toBe('slider')
+      expect(zoomControl?.value).toBe(20)
+      
+      const iterationsControl = newState.filter.controls.find(c => c.id === 'iterations')
+      expect(iterationsControl).toBeDefined()
+      expect(iterationsControl?.value).toBe(128)
+      
+      const colorSchemeControl = newState.filter.controls.find(c => c.id === 'colorScheme')
+      expect(colorSchemeControl).toBeDefined()
+      expect(colorSchemeControl?.type).toBe('select')
+      expect(colorSchemeControl?.options?.length).toBe(4)
+      expect(colorSchemeControl?.value).toBe('rainbow')
+      
+      const blendModeControl = newState.filter.controls.find(c => c.id === 'blendMode')
+      expect(blendModeControl).toBeDefined()
+      expect(blendModeControl?.type).toBe('select')
+      expect(blendModeControl?.options?.length).toBe(4)
+      expect(blendModeControl?.value).toBe('replace')
+      
+      const opacityControl = newState.filter.controls.find(c => c.id === 'opacity')
+      expect(opacityControl).toBeDefined()
+      expect(opacityControl?.value).toBe(100)
+    })
   })
 })

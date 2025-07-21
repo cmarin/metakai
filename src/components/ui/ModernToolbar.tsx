@@ -33,6 +33,11 @@ const filters: FilterType[] = [
     name: 'Materializer',
     description: 'KPT-style metallic and material effects',
   },
+  {
+    id: 'fractal',
+    name: 'Fractal',
+    description: 'Julia and Mandelbrot fractal patterns',
+  },
 ]
 
 export function ModernToolbar() {

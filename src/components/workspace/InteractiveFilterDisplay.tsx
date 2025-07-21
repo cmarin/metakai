@@ -88,6 +88,9 @@ export function InteractiveFilterDisplay() {
         case 'materializer':
           applyMaterializerFilter(ctx, canvas.width, canvas.height)
           break
+        case 'fractal':
+          applyFractalFilter(ctx, canvas.width, canvas.height)
+          break
       }
       
       // Store current state
@@ -646,6 +649,59 @@ export function InteractiveFilterDisplay() {
               transformX = transformX * (1 + Math.abs(transformX) * chaos * 0.5)
               transformY = transformY * (1 + Math.abs(transformY) * chaos * 0.5)
               break
+              
+            case 'spiral':
+              // Spiral pattern using logarithmic spirals
+              const spiralAngle = Math.atan2(ny, nx)
+              const spiralDist = Math.sqrt(nx * nx + ny * ny)
+              const spiralTwist = spiralAngle + Math.log(spiralDist + 0.1) * scale
+              
+              transformX = spiralDist * Math.cos(spiralTwist) * (1 + chaos * 0.5)
+              transformY = spiralDist * Math.sin(spiralTwist) * (1 + chaos * 0.5)
+              break
+              
+            case 'phoenix':
+              // Phoenix pattern - rising flame with wing-like structures
+              const wingSpread = Math.sin(nx * Math.PI * scale) * chaos
+              const rise = -Math.abs(ny) * 2 + Math.sin(x * 0.1) * 0.5
+              
+              transformX = nx + wingSpread * Math.exp(-Math.abs(ny))
+              transformY = ny + rise * chaos * 0.3
+              
+              // Add feather-like texture
+              const feather = Math.sin(x * 0.2 * scale) * Math.cos(y * 0.1 * scale) * 0.1
+              transformX += feather * chaos
+              break
+              
+            case 'dragon':
+              // Dragon pattern - serpentine curves with scale texture
+              const dragonCurve = Math.sin(nx * Math.PI * 2 * scale) * Math.cos(ny * Math.PI)
+              const scalePattern = Math.sin(x * 0.15 * scale) * Math.sin(y * 0.15 * scale)
+              
+              transformX = nx + dragonCurve * chaos
+              transformY = ny + Math.sin(dragonCurve * 3) * chaos * 0.5
+              
+              // Add scale texture
+              transformX += scalePattern * 0.1 * chaos
+              transformY += scalePattern * 0.05 * chaos
+              break
+              
+            case 'cosmic':
+              // Cosmic pattern - galaxy spirals and nebula clouds
+              const cosmicDist = Math.sqrt(nx * nx + ny * ny)
+              const galacticAngle = Math.atan2(ny, nx) + cosmicDist * scale * 0.5
+              const nebula = Math.sin(x * 0.03 * scale) * Math.cos(y * 0.03 * scale)
+              const stars = Math.random() * 0.1
+              
+              transformX = cosmicDist * Math.cos(galacticAngle) + nebula * chaos
+              transformY = cosmicDist * Math.sin(galacticAngle) + nebula * chaos * 0.7
+              
+              // Add starburst effect
+              if (Math.random() < 0.01 * chaos) {
+                transformX += stars
+                transformY += stars
+              }
+              break
           }
           
           // Convert back to pixel coordinates
@@ -678,6 +734,38 @@ export function InteractiveFilterDisplay() {
               // Add prismatic effect
               const prism = (x + y) % 3
               newData[idx + prism] = Math.min(255, newData[idx + prism] * 1.2)
+            } else if (pattern === 'spiral') {
+              // Psychedelic spiral colors
+              const spiralColor = Math.atan2(transformY - centerY, transformX - centerX)
+              newData[idx] = Math.min(255, newData[idx] * (1 + Math.sin(spiralColor * 3) * 0.3))
+              newData[idx + 1] = Math.min(255, newData[idx + 1] * (1 + Math.cos(spiralColor * 3) * 0.3))
+              newData[idx + 2] = Math.min(255, newData[idx + 2] * (1 + Math.sin(spiralColor * 3 + Math.PI) * 0.3))
+            } else if (pattern === 'phoenix') {
+              // Phoenix colors - orange to yellow gradient
+              newData[idx] = Math.min(255, newData[idx] * 1.3)  // Red
+              newData[idx + 1] = Math.min(255, newData[idx + 1] * (0.8 + transformY * 0.4))  // Green fades up
+              newData[idx + 2] = Math.min(255, newData[idx + 2] * 0.6)  // Less blue
+            } else if (pattern === 'dragon') {
+              // Dragon colors - emerald greens with gold highlights
+              newData[idx] = Math.min(255, newData[idx] * 0.8)
+              newData[idx + 1] = Math.min(255, newData[idx + 1] * 1.2)
+              newData[idx + 2] = Math.min(255, newData[idx + 2] * 0.7)
+              // Add gold highlights
+              if (Math.abs(transformX - nx) > chaos * 0.5) {
+                newData[idx] = Math.min(255, newData[idx] * 1.4)
+                newData[idx + 1] = Math.min(255, newData[idx + 1] * 1.2)
+              }
+            } else if (pattern === 'cosmic') {
+              // Cosmic colors - deep blues and purples with star highlights
+              newData[idx] = Math.min(255, newData[idx] * 0.7)
+              newData[idx + 1] = Math.min(255, newData[idx + 1] * 0.6)
+              newData[idx + 2] = Math.min(255, newData[idx + 2] * 1.3)
+              // Star highlights
+              if (Math.random() < 0.001) {
+                newData[idx] = 255
+                newData[idx + 1] = 255
+                newData[idx + 2] = 255
+              }
             }
           }
         }
@@ -785,6 +873,185 @@ export function InteractiveFilterDisplay() {
         newData[idx + 1] = Math.min(255, originalLuminance * materialG * lighting * 255 + highlight * 0.95)
         newData[idx + 2] = Math.min(255, originalLuminance * materialB * lighting * 255 + highlight * 0.9)
         newData[idx + 3] = data[idx + 3]
+      }
+    }
+    
+    ctx.putImageData(newImageData, 0, 0)
+  }
+  
+  const applyFractalFilter = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
+    const fractalType = controls.find(c => c.id === 'fractalType')?.value || 'julia'
+    const zoom = (controls.find(c => c.id === 'zoom')?.value as number) / 100 * 4 + 0.5 || 1
+    const iterations = controls.find(c => c.id === 'iterations')?.value as number || 128
+    const colorScheme = controls.find(c => c.id === 'colorScheme')?.value || 'rainbow'
+    const blendMode = controls.find(c => c.id === 'blendMode')?.value || 'replace'
+    const opacity = (controls.find(c => c.id === 'opacity')?.value as number) / 100 || 1
+    
+    // Get original image data for blending
+    const originalData = ctx.getImageData(0, 0, width, height)
+    const newImageData = ctx.createImageData(width, height)
+    const data = originalData.data
+    const newData = newImageData.data
+    
+    // Fractal parameters
+    let cx = -0.7, cy = 0.27015 // Julia set constants
+    
+    // For Mandelbrot, use different default view
+    const xMin = fractalType === 'mandelbrot' ? -2.5 : -2
+    const xMax = fractalType === 'mandelbrot' ? 1 : 2
+    const yMin = fractalType === 'mandelbrot' ? -1.25 : -2
+    const yMax = fractalType === 'mandelbrot' ? 1.25 : 2
+    
+    // Apply zoom
+    const scaledXMin = xMin / zoom
+    const scaledXMax = xMax / zoom
+    const scaledYMin = yMin / zoom
+    const scaledYMax = yMax / zoom
+    
+    // Julia set variations
+    if (fractalType === 'julia2') {
+      cx = -0.8
+      cy = 0.156
+    } else if (fractalType === 'julia3') {
+      cx = 0.285
+      cy = 0.01
+    } else if (fractalType === 'julia4') {
+      cx = -0.4
+      cy = 0.6
+    }
+    
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const idx = (y * width + x) * 4
+        
+        // Map pixel coordinates to complex plane
+        const zx = scaledXMin + (x / width) * (scaledXMax - scaledXMin)
+        const zy = scaledYMin + (y / height) * (scaledYMax - scaledYMin)
+        
+        let zx2 = zx
+        let zy2 = zy
+        
+        // For Mandelbrot, c varies with position
+        if (fractalType === 'mandelbrot') {
+          cx = zx
+          cy = zy
+          zx2 = 0
+          zy2 = 0
+        }
+        
+        // Iterate the fractal equation
+        let i = 0
+        for (; i < iterations; i++) {
+          const zx_temp = zx2 * zx2 - zy2 * zy2 + cx
+          zy2 = 2 * zx2 * zy2 + cy
+          zx2 = zx_temp
+          
+          // Check if point escapes
+          if (zx2 * zx2 + zy2 * zy2 > 4) {
+            break
+          }
+        }
+        
+        // Color based on iteration count
+        let r = 0, g = 0, b = 0
+        
+        if (i < iterations) {
+          const smooth = i + 1 - Math.log2(Math.log2(zx2 * zx2 + zy2 * zy2))
+          const st = smooth / iterations
+          
+          switch (colorScheme) {
+            case 'rainbow':
+              // HSV to RGB conversion
+              const h = st * 360
+              const s = 1
+              const v = i < iterations ? 1 : 0
+              const c = v * s
+              const x2 = c * (1 - Math.abs(((h / 60) % 2) - 1))
+              const m = v - c
+              
+              if (h < 60) {
+                r = c; g = x2; b = 0
+              } else if (h < 120) {
+                r = x2; g = c; b = 0
+              } else if (h < 180) {
+                r = 0; g = c; b = x2
+              } else if (h < 240) {
+                r = 0; g = x2; b = c
+              } else if (h < 300) {
+                r = x2; g = 0; b = c
+              } else {
+                r = c; g = 0; b = x2
+              }
+              
+              r = (r + m) * 255
+              g = (g + m) * 255
+              b = (b + m) * 255
+              break
+              
+            case 'fire':
+              // Fire gradient: black -> red -> yellow -> white
+              if (st < 0.33) {
+                r = st * 3 * 255
+                g = 0
+                b = 0
+              } else if (st < 0.66) {
+                r = 255
+                g = (st - 0.33) * 3 * 255
+                b = 0
+              } else {
+                r = 255
+                g = 255
+                b = (st - 0.66) * 3 * 255
+              }
+              break
+              
+            case 'ocean':
+              // Ocean gradient: dark blue -> cyan -> white
+              if (st < 0.5) {
+                r = 0
+                g = st * 2 * 128
+                b = 128 + st * 2 * 127
+              } else {
+                r = (st - 0.5) * 2 * 255
+                g = 128 + (st - 0.5) * 2 * 127
+                b = 255
+              }
+              break
+              
+            case 'psychedelic':
+              // Psychedelic colors with sine waves
+              r = Math.sin(st * Math.PI * 8) * 127 + 128
+              g = Math.sin(st * Math.PI * 8 + Math.PI / 3) * 127 + 128
+              b = Math.sin(st * Math.PI * 8 + 2 * Math.PI / 3) * 127 + 128
+              break
+          }
+        }
+        
+        // Apply blend mode
+        if (blendMode === 'replace') {
+          newData[idx] = r
+          newData[idx + 1] = g
+          newData[idx + 2] = b
+          newData[idx + 3] = 255
+        } else if (blendMode === 'multiply') {
+          newData[idx] = (data[idx] * r / 255) * opacity + data[idx] * (1 - opacity)
+          newData[idx + 1] = (data[idx + 1] * g / 255) * opacity + data[idx + 1] * (1 - opacity)
+          newData[idx + 2] = (data[idx + 2] * b / 255) * opacity + data[idx + 2] * (1 - opacity)
+          newData[idx + 3] = data[idx + 3]
+        } else if (blendMode === 'screen') {
+          newData[idx] = (255 - (255 - data[idx]) * (255 - r) / 255) * opacity + data[idx] * (1 - opacity)
+          newData[idx + 1] = (255 - (255 - data[idx + 1]) * (255 - g) / 255) * opacity + data[idx + 1] * (1 - opacity)
+          newData[idx + 2] = (255 - (255 - data[idx + 2]) * (255 - b) / 255) * opacity + data[idx + 2] * (1 - opacity)
+          newData[idx + 3] = data[idx + 3]
+        } else if (blendMode === 'overlay') {
+          const overlayBlend = (base: number, blend: number) => {
+            return base < 128 ? (2 * base * blend / 255) : (255 - 2 * (255 - base) * (255 - blend) / 255)
+          }
+          newData[idx] = overlayBlend(data[idx], r) * opacity + data[idx] * (1 - opacity)
+          newData[idx + 1] = overlayBlend(data[idx + 1], g) * opacity + data[idx + 1] * (1 - opacity)
+          newData[idx + 2] = overlayBlend(data[idx + 2], b) * opacity + data[idx + 2] * (1 - opacity)
+          newData[idx + 3] = data[idx + 3]
+        }
       }
     }
     

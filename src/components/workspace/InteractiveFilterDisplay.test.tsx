@@ -117,6 +117,18 @@ describe('InteractiveFilterDisplay', () => {
           { id: 'shine', type: 'slider', label: 'Shine', value: 70 },
           { id: 'ambient', type: 'slider', label: 'Ambient Light', value: 30 }
         ]
+      },
+      {
+        name: 'fractal',
+        filter: { id: 'fractal', name: 'Fractal', description: 'Test' },
+        controls: [
+          { id: 'fractalType', type: 'select', label: 'Fractal Type', value: 'julia' },
+          { id: 'zoom', type: 'slider', label: 'Zoom', value: 20 },
+          { id: 'iterations', type: 'slider', label: 'Detail', value: 128 },
+          { id: 'colorScheme', type: 'select', label: 'Color Scheme', value: 'rainbow' },
+          { id: 'blendMode', type: 'select', label: 'Blend Mode', value: 'replace' },
+          { id: 'opacity', type: 'slider', label: 'Opacity', value: 100 }
+        ]
       }
     ]
 

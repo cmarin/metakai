@@ -155,6 +155,10 @@ function getDefaultControls(filterId: string): FilterControl[] {
           { label: 'Electric', value: 'electric' },
           { label: 'Organic', value: 'organic' },
           { label: 'Crystal', value: 'crystal' },
+          { label: 'Spiral', value: 'spiral' },
+          { label: 'Phoenix', value: 'phoenix' },
+          { label: 'Dragon', value: 'dragon' },
+          { label: 'Cosmic', value: 'cosmic' },
         ]},
         { id: 'iterations', type: 'slider', label: 'Iterations', min: 1, max: 10, value: 3 },
         { id: 'scale', type: 'slider', label: 'Scale', min: 10, max: 200, value: 100 },
@@ -171,6 +175,31 @@ function getDefaultControls(filterId: string): FilterControl[] {
         { id: 'relief', type: 'slider', label: 'Relief Depth', min: 0, max: 100, value: 50 },
         { id: 'shine', type: 'slider', label: 'Shine', min: 0, max: 100, value: 70 },
         { id: 'ambient', type: 'slider', label: 'Ambient Light', min: 0, max: 100, value: 30 },
+      ]
+    case 'fractal':
+      return [
+        { id: 'fractalType', type: 'select', label: 'Fractal Type', value: 'julia', options: [
+          { label: 'Julia Set', value: 'julia' },
+          { label: 'Julia Set 2', value: 'julia2' },
+          { label: 'Julia Set 3', value: 'julia3' },
+          { label: 'Julia Set 4', value: 'julia4' },
+          { label: 'Mandelbrot', value: 'mandelbrot' },
+        ]},
+        { id: 'zoom', type: 'slider', label: 'Zoom', min: 0, max: 100, value: 20 },
+        { id: 'iterations', type: 'slider', label: 'Detail', min: 32, max: 256, value: 128 },
+        { id: 'colorScheme', type: 'select', label: 'Color Scheme', value: 'rainbow', options: [
+          { label: 'Rainbow', value: 'rainbow' },
+          { label: 'Fire', value: 'fire' },
+          { label: 'Ocean', value: 'ocean' },
+          { label: 'Psychedelic', value: 'psychedelic' },
+        ]},
+        { id: 'blendMode', type: 'select', label: 'Blend Mode', value: 'replace', options: [
+          { label: 'Replace', value: 'replace' },
+          { label: 'Multiply', value: 'multiply' },
+          { label: 'Screen', value: 'screen' },
+          { label: 'Overlay', value: 'overlay' },
+        ]},
+        { id: 'opacity', type: 'slider', label: 'Opacity', min: 0, max: 100, value: 100 },
       ]
     default:
       return []
