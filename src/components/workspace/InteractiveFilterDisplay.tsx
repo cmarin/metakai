@@ -79,6 +79,12 @@ export function InteractiveFilterDisplay() {
         case 'gel-paint':
           applyGelPaintFilter(ctx, canvas.width, canvas.height)
           break
+        case 'projection':
+          applyProjectionFilter(ctx, canvas.width, canvas.height)
+          break
+        case 'reaction':
+          applyReactionFilter(ctx, canvas.width, canvas.height)
+          break
       }
       
       // Store current state
@@ -400,6 +406,230 @@ export function InteractiveFilterDisplay() {
         newData[idx + 1] = Math.min(255, data[idx + 1] * (1 - depth * 0.3) + highlight * 0.9 + specular * 0.9)
         newData[idx + 2] = Math.min(255, data[bSampleIdx + 2] * (1 - depth * 0.3) + highlight * 0.8 + specular * 0.8)
         newData[idx + 3] = data[idx + 3]
+      }
+    }
+    
+    ctx.putImageData(newImageData, 0, 0)
+  }
+  
+  const applyProjectionFilter = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
+    const type = controls.find(c => c.id === 'type')?.value || 'sphere'
+    const fov = (controls.find(c => c.id === 'fov')?.value as number) || 90
+    const rotation = ((controls.find(c => c.id === 'rotation')?.value as number) || 0) * Math.PI / 180
+    const distortion = (controls.find(c => c.id === 'distortion')?.value as number) / 100 || 0.5
+    
+    const imageData = ctx.getImageData(0, 0, width, height)
+    const data = imageData.data
+    const newImageData = ctx.createImageData(width, height)
+    const newData = newImageData.data
+    
+    const centerX = width / 2
+    const centerY = height / 2
+    const radius = Math.min(width, height) / 2
+    
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const idx = (y * width + x) * 4
+        
+        // Normalize coordinates to -1 to 1
+        let nx = (x - centerX) / radius
+        let ny = (y - centerY) / radius
+        
+        // Apply rotation
+        const rotX = nx * Math.cos(rotation) - ny * Math.sin(rotation)
+        const rotY = nx * Math.sin(rotation) + ny * Math.cos(rotation)
+        nx = rotX
+        ny = rotY
+        
+        let sourceX = x
+        let sourceY = y
+        
+        switch (type) {
+          case 'sphere':
+            const r = Math.sqrt(nx * nx + ny * ny)
+            if (r < 1) {
+              const z = Math.sqrt(1 - r * r)
+              const phi = Math.atan2(ny, nx)
+              const theta = Math.acos(z) * (fov / 180)
+              
+              sourceX = centerX + radius * Math.sin(theta) * Math.cos(phi) * (1 + distortion * z)
+              sourceY = centerY + radius * Math.sin(theta) * Math.sin(phi) * (1 + distortion * z)
+            }
+            break
+            
+          case 'cylinder':
+            if (Math.abs(nx) < 1) {
+              const angle = Math.asin(nx) * (fov / 90)
+              sourceX = centerX + radius * angle * (1 + distortion * Math.cos(angle))
+              sourceY = y + ny * radius * distortion * 0.5
+            }
+            break
+            
+          case 'cone':
+            const dist = Math.sqrt(nx * nx + ny * ny)
+            if (dist > 0) {
+              const angle = Math.atan2(ny, nx)
+              const newDist = dist * (1 - distortion * (1 - dist))
+              sourceX = centerX + newDist * radius * Math.cos(angle)
+              sourceY = centerY + newDist * radius * Math.sin(angle)
+            }
+            break
+            
+          case 'plane':
+            const warpX = Math.sin(ny * Math.PI) * distortion * radius * 0.3
+            const warpY = Math.sin(nx * Math.PI) * distortion * radius * 0.3
+            sourceX = x + warpX
+            sourceY = y + warpY
+            break
+        }
+        
+        // Bilinear interpolation for smooth sampling
+        sourceX = Math.max(0, Math.min(width - 1, sourceX))
+        sourceY = Math.max(0, Math.min(height - 1, sourceY))
+        
+        const x0 = Math.floor(sourceX)
+        const x1 = Math.min(x0 + 1, width - 1)
+        const y0 = Math.floor(sourceY)
+        const y1 = Math.min(y0 + 1, height - 1)
+        
+        const fx = sourceX - x0
+        const fy = sourceY - y0
+        
+        const idx00 = (y0 * width + x0) * 4
+        const idx01 = (y0 * width + x1) * 4
+        const idx10 = (y1 * width + x0) * 4
+        const idx11 = (y1 * width + x1) * 4
+        
+        for (let c = 0; c < 4; c++) {
+          const v00 = data[idx00 + c]
+          const v01 = data[idx01 + c]
+          const v10 = data[idx10 + c]
+          const v11 = data[idx11 + c]
+          
+          const v0 = v00 * (1 - fx) + v01 * fx
+          const v1 = v10 * (1 - fx) + v11 * fx
+          const v = v0 * (1 - fy) + v1 * fy
+          
+          newData[idx + c] = Math.round(v)
+        }
+      }
+    }
+    
+    ctx.putImageData(newImageData, 0, 0)
+  }
+  
+  const applyReactionFilter = (ctx: CanvasRenderingContext2D, width: number, height: number) => {
+    const pattern = controls.find(c => c.id === 'pattern')?.value || 'flame'
+    const iterations = (controls.find(c => c.id === 'iterations')?.value as number) || 3
+    const scale = (controls.find(c => c.id === 'scale')?.value as number) / 100 || 1
+    const chaos = (controls.find(c => c.id === 'chaos')?.value as number) / 100 || 0.5
+    
+    const imageData = ctx.getImageData(0, 0, width, height)
+    const data = imageData.data
+    const newImageData = ctx.createImageData(width, height)
+    const newData = newImageData.data
+    
+    // Initialize with original image
+    for (let i = 0; i < data.length; i++) {
+      newData[i] = data[i]
+    }
+    
+    // Fractal flame algorithm
+    const centerX = width / 2
+    const centerY = height / 2
+    
+    for (let iter = 0; iter < iterations; iter++) {
+      const tempData = new Uint8ClampedArray(newData)
+      
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          const idx = (y * width + x) * 4
+          
+          // Normalize coordinates
+          let nx = (x - centerX) / (width / 2)
+          let ny = (y - centerY) / (height / 2)
+          
+          // Apply fractal transformations based on pattern
+          let transformX = nx
+          let transformY = ny
+          
+          switch (pattern) {
+            case 'flame':
+              // Flame pattern using sinusoidal variations
+              transformX = nx + Math.sin(ny * Math.PI * scale) * chaos
+              transformY = ny + Math.cos(nx * Math.PI * scale) * chaos
+              
+              // Add turbulence
+              const turbulence = Math.sin(x * 0.05) * Math.cos(y * 0.05) * chaos
+              transformX += turbulence
+              transformY -= turbulence * 0.5
+              break
+              
+            case 'electric':
+              // Electric pattern using exponential functions
+              const angle = Math.atan2(ny, nx)
+              const dist = Math.sqrt(nx * nx + ny * ny)
+              
+              transformX = nx + Math.sin(angle * scale * 4) * Math.exp(-dist) * chaos
+              transformY = ny + Math.cos(angle * scale * 4) * Math.exp(-dist) * chaos
+              break
+              
+            case 'organic':
+              // Organic pattern using Perlin noise-like effect
+              const noise1 = Math.sin(x * 0.02 * scale) * Math.cos(y * 0.02 * scale)
+              const noise2 = Math.sin(x * 0.05 * scale + 1.5) * Math.cos(y * 0.05 * scale + 1.5)
+              
+              transformX = nx + (noise1 + noise2 * 0.5) * chaos
+              transformY = ny + (noise2 - noise1 * 0.5) * chaos
+              break
+              
+            case 'crystal':
+              // Crystal pattern using geometric transformations
+              const facets = 6
+              const facetAngle = Math.floor(Math.atan2(ny, nx) / (Math.PI * 2 / facets)) * (Math.PI * 2 / facets)
+              
+              transformX = nx * Math.cos(facetAngle) + ny * Math.sin(facetAngle)
+              transformY = -nx * Math.sin(facetAngle) + ny * Math.cos(facetAngle)
+              
+              // Add crystalline distortion
+              transformX = transformX * (1 + Math.abs(transformX) * chaos * 0.5)
+              transformY = transformY * (1 + Math.abs(transformY) * chaos * 0.5)
+              break
+          }
+          
+          // Convert back to pixel coordinates
+          const sourceX = Math.round(transformX * (width / 2) + centerX)
+          const sourceY = Math.round(transformY * (height / 2) + centerY)
+          
+          if (sourceX >= 0 && sourceX < width && sourceY >= 0 && sourceY < height) {
+            const sourceIdx = (sourceY * width + sourceX) * 4
+            
+            // Blend with original using iteration-based weighting
+            const weight = 1 / (iter + 1)
+            
+            for (let c = 0; c < 3; c++) {
+              newData[idx + c] = tempData[idx + c] * (1 - weight) + tempData[sourceIdx + c] * weight
+            }
+            
+            // Add color variation based on pattern
+            if (pattern === 'flame') {
+              // Enhance reds and yellows
+              newData[idx] = Math.min(255, newData[idx] * 1.2)
+              newData[idx + 1] = Math.min(255, newData[idx + 1] * 1.1)
+            } else if (pattern === 'electric') {
+              // Enhance blues and whites
+              newData[idx + 2] = Math.min(255, newData[idx + 2] * 1.3)
+              newData[idx] = Math.min(255, newData[idx] * 0.9)
+            } else if (pattern === 'organic') {
+              // Enhance greens
+              newData[idx + 1] = Math.min(255, newData[idx + 1] * 1.2)
+            } else if (pattern === 'crystal') {
+              // Add prismatic effect
+              const prism = (x + y) % 3
+              newData[idx + prism] = Math.min(255, newData[idx + prism] * 1.2)
+            }
+          }
+        }
       }
     }
     
