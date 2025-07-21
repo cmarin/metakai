@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { SimpleCanvas } from './components/workspace/SimpleCanvas'
+import { ImageDisplay } from './components/workspace/ImageDisplay'
 import { ModernToolbar } from './components/ui/ModernToolbar'
 import { ModernControlPanel } from './components/ui/ModernControlPanel'
 import { ModernZoomControls } from './components/workspace/ModernZoomControls'
@@ -25,7 +25,7 @@ function App() {
       
       <main className="flex-1 flex overflow-hidden">
         <div className="flex-1 relative bg-gray-100 dark:bg-gray-900">
-          <SimpleCanvas />
+          <ImageDisplay />
           <ModernZoomControls />
         </div>
         
