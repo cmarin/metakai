@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, fireEvent } from '@testing-library/react'
 import { TouchSlider } from './TouchSlider'
 
@@ -25,7 +25,7 @@ describe('TouchSlider', () => {
     expect(slider).toHaveAttribute('step', '1')
     expect(slider).toHaveAttribute('value', '50')
     // Check inline style
-    expect(slider?.style.touchAction).toBe('none')
+    expect((slider as HTMLInputElement)?.style.touchAction).toBe('none')
   })
 
   it('should apply custom className', () => {
