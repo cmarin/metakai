@@ -18,6 +18,7 @@ describe('App Store', () => {
         historyIndex: -1,
       },
       theme: 'light',
+      mobileDrawerOpen: false,
     })
   })
   
@@ -103,6 +104,70 @@ describe('App Store', () => {
       
       toggleTheme()
       expect(useStore.getState().theme).toBe('light')
+    })
+  })
+  
+  describe('Mobile drawer actions', () => {
+    it('should set mobile drawer open state', () => {
+      const { setMobileDrawerOpen } = useStore.getState()
+      
+      expect(useStore.getState().mobileDrawerOpen).toBe(false)
+      
+      setMobileDrawerOpen(true)
+      expect(useStore.getState().mobileDrawerOpen).toBe(true)
+      
+      setMobileDrawerOpen(false)
+      expect(useStore.getState().mobileDrawerOpen).toBe(false)
+    })
+  })
+  
+  describe('New filter types', () => {
+    it('should set projection filter with correct controls', () => {
+      const { setActiveFilter } = useStore.getState()
+      const projectionFilter = {
+        id: 'projection',
+        name: 'Projection',
+        description: '3D perspective transformations',
+      }
+      
+      setActiveFilter(projectionFilter)
+      
+      const state = useStore.getState()
+      expect(state.filter.activeFilter).toEqual(projectionFilter)
+      expect(state.filter.controls.length).toBeGreaterThan(0)
+      
+      const typeControl = state.filter.controls.find(c => c.id === 'type')
+      expect(typeControl).toBeDefined()
+      expect(typeControl?.type).toBe('select')
+      expect(typeControl?.options).toBeDefined()
+      
+      const fovControl = state.filter.controls.find(c => c.id === 'fov')
+      expect(fovControl).toBeDefined()
+      expect(fovControl?.type).toBe('slider')
+    })
+    
+    it('should set reaction filter with correct controls', () => {
+      const { setActiveFilter } = useStore.getState()
+      const reactionFilter = {
+        id: 'reaction',
+        name: 'Reaction',
+        description: 'Fractal flame patterns',
+      }
+      
+      setActiveFilter(reactionFilter)
+      
+      const state = useStore.getState()
+      expect(state.filter.activeFilter).toEqual(reactionFilter)
+      expect(state.filter.controls.length).toBeGreaterThan(0)
+      
+      const patternControl = state.filter.controls.find(c => c.id === 'pattern')
+      expect(patternControl).toBeDefined()
+      expect(patternControl?.type).toBe('select')
+      expect(patternControl?.options).toBeDefined()
+      
+      const iterationsControl = state.filter.controls.find(c => c.id === 'iterations')
+      expect(iterationsControl).toBeDefined()
+      expect(iterationsControl?.type).toBe('slider')
     })
   })
 })
