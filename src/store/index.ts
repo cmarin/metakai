@@ -160,6 +160,18 @@ function getDefaultControls(filterId: string): FilterControl[] {
         { id: 'scale', type: 'slider', label: 'Scale', min: 10, max: 200, value: 100 },
         { id: 'chaos', type: 'slider', label: 'Chaos', min: 0, max: 100, value: 50 },
       ]
+    case 'materializer':
+      return [
+        { id: 'material', type: 'select', label: 'Material', value: 'chrome', options: [
+          { label: 'Chrome', value: 'chrome' },
+          { label: 'Gold', value: 'gold' },
+          { label: 'Copper', value: 'copper' },
+          { label: 'Steel', value: 'steel' },
+        ]},
+        { id: 'relief', type: 'slider', label: 'Relief Depth', min: 0, max: 100, value: 50 },
+        { id: 'shine', type: 'slider', label: 'Shine', min: 0, max: 100, value: 70 },
+        { id: 'ambient', type: 'slider', label: 'Ambient Light', min: 0, max: 100, value: 30 },
+      ]
     default:
       return []
   }

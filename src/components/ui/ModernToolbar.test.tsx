@@ -39,6 +39,7 @@ describe('ModernToolbar', () => {
     expect(screen.getByRole('button', { name: 'Glass Lens' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Projection' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Reaction' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Materializer' })).toBeInTheDocument()
   })
 
   it('should have scrollable filter container', () => {
