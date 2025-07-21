@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Image Upload</title>
+    <style>
+        body { 
+            margin: 0; 
+            padding: 20px; 
+            font-family: Arial, sans-serif;
+            background: #f0f0f0;
+        }
+        #preview {
+            margin-top: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+        #info {
+            margin-top: 10px;
+            padding: 10px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>Test Image Upload</h1>
+    <input type="file" id="fileInput" accept="image/*">
+    <div id="preview">
+        <p>Select an image to preview</p>
+    </div>
+    
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const preview = document.getElementById('preview');
+        
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            console.log('File selected:', file);
+            
+            // Method 1: Object URL
+            const objectUrl = URL.createObjectURL(file);
+            console.log('Object URL:', objectUrl);
+            
+            // Method 2: FileReader
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const dataUrl = e.target.result;
+                console.log('Data URL (first 100 chars):', dataUrl.substring(0, 100));
+                
+                preview.innerHTML = `
+                    <h3>Object URL Method:</h3>
+                    <img src="${objectUrl}" alt="Object URL">
+                    <div id="info">
+File: ${file.name}
+Type: ${file.type}
+Size: ${file.size} bytes
+Object URL: ${objectUrl}
+                    </div>
+                    
+                    <h3 style="margin-top: 20px;">Data URL Method:</h3>
+                    <img src="${dataUrl}" alt="Data URL">
+                `;
+            };
+            reader.readAsDataURL(file);
+        });
+    </script>
+</body>
+</html>
