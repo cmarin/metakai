@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { useStore } from '../../store'
 import type { FilterControl } from '../../types'
 import { TouchSlider } from './TouchSlider'
