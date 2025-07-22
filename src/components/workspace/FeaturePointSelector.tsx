@@ -21,9 +21,24 @@ export function FeaturePointSelector({
   const [nextPointSide, setNextPointSide] = useState<'source' | 'target'>('source')
   const [tempPoint, setTempPoint] = useState<Partial<FeaturePoint> | null>(null)
   const animationFrameRef = useRef<number>(0)
+  const [canvasesReady, setCanvasesReady] = useState(false)
+  
+  // Ensure canvases are properly sized when images change
+  useEffect(() => {
+    if (sourceImage && targetImage && sourceCanvasRef.current && targetCanvasRef.current) {
+      sourceCanvasRef.current.width = sourceImage.width
+      sourceCanvasRef.current.height = sourceImage.height
+      targetCanvasRef.current.width = targetImage.width
+      targetCanvasRef.current.height = targetImage.height
+      setCanvasesReady(true)
+    }
+  }, [sourceImage, targetImage])
   
   // Draw images and points with animation
   useEffect(() => {
+    // Ensure both images are loaded before drawing
+    if (!sourceImage || !targetImage || !canvasesReady) return
+    
     const isMobile = window.innerWidth < 768
     
     if (isMobile && (featurePoints.length > 0 || tempPoint)) {
@@ -42,13 +57,16 @@ export function FeaturePointSelector({
       drawCanvas('source')
       drawCanvas('target')
     }
-  }, [sourceImage, targetImage, featurePoints, selectedPointId, tempPoint])
+  }, [sourceImage, targetImage, featurePoints, selectedPointId, tempPoint, canvasesReady])
   
   const drawCanvas = (side: 'source' | 'target') => {
     const canvas = side === 'source' ? sourceCanvasRef.current : targetCanvasRef.current
     const image = side === 'source' ? sourceImage : targetImage
     
-    if (!canvas || !image) return
+    if (!canvas || !image) {
+      console.warn(`Missing ${side} canvas or image`, { canvas: !!canvas, image: !!image })
+      return
+    }
     
     const ctx = canvas.getContext('2d')!
     ctx.clearRect(0, 0, canvas.width, canvas.height)

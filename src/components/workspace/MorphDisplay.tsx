@@ -7,6 +7,7 @@ import { FeaturePointSelector } from './FeaturePointSelector'
 import { MorphEngine } from '../../utils/morphing/morph-engine'
 import type { FeaturePoint } from '../../utils/morphing/morph-engine'
 import { DownloadModal } from '../ui/DownloadModal'
+import { VideoGenerationModal } from '../ui/VideoGenerationModal'
 
 interface VideoFrame {
   imageData: ImageData
@@ -17,7 +18,6 @@ export function MorphDisplay() {
   const sourceCanvasRef = useRef<HTMLCanvasElement>(null)
   const targetCanvasRef = useRef<HTMLCanvasElement>(null)
   const previewCanvasRef = useRef<HTMLCanvasElement>(null)
-  const videoCanvasRef = useRef<HTMLCanvasElement>(null)
   const sourceImageRef = useRef<HTMLImageElement | null>(null)
   const targetImageRef = useRef<HTMLImageElement | null>(null)
   const sourceInputRef = useRef<HTMLInputElement>(null)
@@ -34,12 +34,12 @@ export function MorphDisplay() {
   const ffmpegRef = useRef<any>(null)
   const [ffmpegLoaded, setFfmpegLoaded] = useState(false)
   const [exportProgress, setExportProgress] = useState(0)
-  const [showControls, setShowControls] = useState(false)
   const [showFeaturePoints, setShowFeaturePoints] = useState(false)
   const [featurePoints, setFeaturePoints] = useState<FeaturePoint[]>([])
   const [morphMode, setMorphMode] = useState<'simple' | 'advanced'>('simple')
   const morphEngineRef = useRef<MorphEngine | null>(null)
   const [showDownloadModal, setShowDownloadModal] = useState(false)
+  const [showVideoModal, setShowVideoModal] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   
   const image = useStore((state) => state.workspace.image)
@@ -266,7 +266,6 @@ export function MorphDisplay() {
     }
     
     setIsGeneratingVideo(true)
-    setShowControls(true)
     const frames: VideoFrame[] = []
     
     // Create temporary canvas for frame generation
@@ -320,6 +319,7 @@ export function MorphDisplay() {
     setVideoFrames(frames)
     setIsGeneratingVideo(false)
     setCurrentFrame(0)
+    setShowVideoModal(true)
   }, [totalFrames, fps, transitionType])
   
   const playVideo = useCallback(() => {
@@ -332,21 +332,7 @@ export function MorphDisplay() {
       const deltaTime = currentTime - lastFrameTimeRef.current
       
       if (deltaTime >= 1000 / fps) {
-        setCurrentFrame(prev => {
-          const next = (prev + 1) % videoFrames.length
-          
-          // Draw current frame
-          const videoCanvas = videoCanvasRef.current
-          if (videoCanvas) {
-            const ctx = videoCanvas.getContext('2d')
-            if (ctx && videoFrames[next]) {
-              ctx.putImageData(videoFrames[next].imageData, 0, 0)
-            }
-          }
-          
-          return next
-        })
-        
+        setCurrentFrame(prev => (prev + 1) % videoFrames.length)
         lastFrameTimeRef.current = currentTime
       }
       
@@ -361,6 +347,11 @@ export function MorphDisplay() {
     if (animationRef.current) {
       cancelAnimationFrame(animationRef.current)
     }
+  }
+  
+  const resetVideo = () => {
+    stopVideo()
+    setCurrentFrame(0)
   }
   
   const downloadMP4 = async () => {
@@ -631,78 +622,15 @@ export function MorphDisplay() {
               {videoFrames.length > 0 ? 'Video Preview' : 'Morph Preview'}
             </h3>
             <div className="aspect-video bg-gray-100 dark:bg-gray-700 rounded overflow-hidden">
-              {videoFrames.length > 0 ? (
-                <canvas
-                  ref={videoCanvasRef}
-                  width={sourceImageRef.current?.width || 800}
-                  height={sourceImageRef.current?.height || 600}
-                  className="w-full h-full object-contain"
-                  style={{ imageRendering: 'pixelated' }}
-                />
-              ) : (
-                <canvas
-                  ref={previewCanvasRef}
-                  className="w-full h-full object-contain"
-                  style={{ imageRendering: 'pixelated' }}
-                />
-              )}
+              <canvas
+                ref={previewCanvasRef}
+                className="w-full h-full object-contain"
+                style={{ imageRendering: 'pixelated' }}
+              />
             </div>
           </div>
         )}
         
-        {/* Video controls */}
-        {videoFrames.length > 0 && showControls && (
-          <div className="fixed inset-x-0 bottom-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-3 shadow-lg z-20 safe-area-inset-bottom">
-            <div className="max-w-screen-lg mx-auto">
-              <div className="flex justify-between items-center mb-2">
-                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Video Controls</h3>
-                <button
-                  onClick={() => setShowControls(false)}
-                  className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-              
-              <div className="space-y-2">
-                <div className="flex gap-2">
-                  <button
-                    onClick={isPlaying ? stopVideo : playVideo}
-                    className="flex-1 px-3 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700"
-                  >
-                    {isPlaying ? 'Stop' : 'Play'}
-                  </button>
-                  
-                  <button
-                    onClick={() => setShowDownloadModal(true)}
-                    className="flex-1 px-3 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700"
-                  >
-                    Download
-                  </button>
-                </div>
-                
-                <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
-                  <span>Frame: {currentFrame + 1} / {videoFrames.length}</span>
-                  {!ffmpegLoaded && (
-                    <span className="text-yellow-600">Video encoder loading...</span>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {/* Show controls button when hidden */}
-        {videoFrames.length > 0 && !showControls && (
-          <button
-            onClick={() => setShowControls(true)}
-            className="fixed bottom-4 right-4 px-4 py-2 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 z-20"
-          >
-            Show Video Controls
-          </button>
-        )}
       </div>
       
       {/* Download Modal */}
@@ -714,6 +642,23 @@ export function MorphDisplay() {
         isExporting={isExporting}
         exportProgress={exportProgress}
         canUseMP4={ffmpegRef.current && ffmpegLoaded && typeof SharedArrayBuffer !== 'undefined'}
+      />
+      
+      {/* Video Generation Modal */}
+      <VideoGenerationModal
+        isOpen={showVideoModal}
+        onClose={() => setShowVideoModal(false)}
+        videoFrames={videoFrames}
+        currentFrame={currentFrame}
+        isPlaying={isPlaying}
+        onPlay={playVideo}
+        onPause={stopVideo}
+        onReset={resetVideo}
+        onFrameChange={setCurrentFrame}
+        onExport={() => setShowDownloadModal(true)}
+        fps={fps}
+        width={sourceImageRef.current?.width || 800}
+        height={sourceImageRef.current?.height || 600}
       />
     </div>
   )
