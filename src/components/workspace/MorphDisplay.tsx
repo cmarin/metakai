@@ -3,6 +3,9 @@ import { useStore } from '../../store'
 import { fetchFile } from '@ffmpeg/util'
 import { getFFmpeg } from '../../utils/ffmpeg-loader'
 import GIF from 'gif.js'
+import { FeaturePointSelector } from './FeaturePointSelector'
+import { MorphEngine } from '../../utils/morphing/morph-engine'
+import type { FeaturePoint } from '../../utils/morphing/morph-engine'
 
 interface VideoFrame {
   imageData: ImageData
@@ -31,14 +34,24 @@ export function MorphDisplay() {
   const [ffmpegLoaded, setFfmpegLoaded] = useState(false)
   const [exportProgress, setExportProgress] = useState(0)
   const [showControls, setShowControls] = useState(false)
+  const [showFeaturePoints, setShowFeaturePoints] = useState(false)
+  const [featurePoints, setFeaturePoints] = useState<FeaturePoint[]>([])
+  const [morphMode, setMorphMode] = useState<'simple' | 'advanced'>('simple')
+  const morphEngineRef = useRef<MorphEngine | null>(null)
   
   const image = useStore((state) => state.workspace.image)
   const controls = useStore((state) => state.filter.controls)
   
+  const morphModeControl = controls.find(c => c.id === 'morphMode')?.value as string || 'simple'
   const morphAmount = controls.find(c => c.id === 'morphAmount')?.value as number || 0
   const totalFrames = controls.find(c => c.id === 'frames')?.value as number || 30
   const fps = controls.find(c => c.id === 'fps')?.value as number || 30
   const transitionType = controls.find(c => c.id === 'transitionType')?.value as string || 'linear'
+  
+  // Update morph mode when control changes
+  useEffect(() => {
+    setMorphMode(morphModeControl as 'simple' | 'advanced')
+  }, [morphModeControl])
   
   // Initialize FFmpeg
   useEffect(() => {
@@ -94,10 +107,22 @@ export function MorphDisplay() {
     img.src = targetImageUrl
   }, [targetImageUrl])
   
+  // Initialize morph engine when images change
+  useEffect(() => {
+    if (sourceImageRef.current && targetImageRef.current) {
+      morphEngineRef.current = new MorphEngine(
+        sourceImageRef.current.width,
+        sourceImageRef.current.height
+      )
+      morphEngineRef.current.setSourceImage(sourceImageRef.current)
+      morphEngineRef.current.setTargetImage(targetImageRef.current)
+    }
+  }, [sourceImageUrl, targetImageUrl])
+  
   // Update preview when controls change
   useEffect(() => {
     updateMorphPreview()
-  }, [morphAmount, transitionType])
+  }, [morphAmount, transitionType, morphMode, featurePoints])
   
   const drawSourceImage = () => {
     const canvas = sourceCanvasRef.current
@@ -211,15 +236,21 @@ export function MorphDisplay() {
     
     const t = easeTransition(morphAmount / 100, transitionType)
     
-    // Simple linear interpolation between pixels
-    for (let i = 0; i < sourceData.data.length; i += 4) {
-      outputData.data[i] = sourceData.data[i] * (1 - t) + targetData.data[i] * t
-      outputData.data[i + 1] = sourceData.data[i + 1] * (1 - t) + targetData.data[i + 1] * t
-      outputData.data[i + 2] = sourceData.data[i + 2] * (1 - t) + targetData.data[i + 2] * t
-      outputData.data[i + 3] = sourceData.data[i + 3] * (1 - t) + targetData.data[i + 3] * t
+    if (morphMode === 'advanced' && morphEngineRef.current && featurePoints.length > 0) {
+      // Use advanced morphing
+      const morphedData = morphEngineRef.current.morph(featurePoints, t)
+      ctx.putImageData(morphedData, 0, 0)
+    } else {
+      // Simple linear interpolation between pixels
+      for (let i = 0; i < sourceData.data.length; i += 4) {
+        outputData.data[i] = sourceData.data[i] * (1 - t) + targetData.data[i] * t
+        outputData.data[i + 1] = sourceData.data[i + 1] * (1 - t) + targetData.data[i + 1] * t
+        outputData.data[i + 2] = sourceData.data[i + 2] * (1 - t) + targetData.data[i + 2] * t
+        outputData.data[i + 3] = sourceData.data[i + 3] * (1 - t) + targetData.data[i + 3] * t
+      }
+      
+      ctx.putImageData(outputData, 0, 0)
     }
-    
-    ctx.putImageData(outputData, 0, 0)
   }
   
   const generateVideo = useCallback(async () => {
@@ -260,14 +291,21 @@ export function MorphDisplay() {
       const progress = frame / (totalFrames - 1)
       const t = easeTransition(progress, transitionType)
       
-      const frameData = tempCtx.createImageData(sourceImg.width, sourceImg.height)
+      let frameData: ImageData
       
-      // Interpolate pixels
-      for (let i = 0; i < sourceData.data.length; i += 4) {
-        frameData.data[i] = sourceData.data[i] * (1 - t) + targetData.data[i] * t
-        frameData.data[i + 1] = sourceData.data[i + 1] * (1 - t) + targetData.data[i + 1] * t
-        frameData.data[i + 2] = sourceData.data[i + 2] * (1 - t) + targetData.data[i + 2] * t
-        frameData.data[i + 3] = sourceData.data[i + 3] * (1 - t) + targetData.data[i + 3] * t
+      if (morphMode === 'advanced' && morphEngineRef.current && featurePoints.length > 0) {
+        // Use advanced morphing
+        frameData = morphEngineRef.current.morph(featurePoints, t)
+      } else {
+        // Simple interpolation
+        frameData = tempCtx.createImageData(sourceImg.width, sourceImg.height)
+        
+        for (let i = 0; i < sourceData.data.length; i += 4) {
+          frameData.data[i] = sourceData.data[i] * (1 - t) + targetData.data[i] * t
+          frameData.data[i + 1] = sourceData.data[i + 1] * (1 - t) + targetData.data[i + 1] * t
+          frameData.data[i + 2] = sourceData.data[i + 2] * (1 - t) + targetData.data[i + 2] * t
+          frameData.data[i + 3] = sourceData.data[i + 3] * (1 - t) + targetData.data[i + 3] * t
+        }
       }
       
       frames.push({
@@ -548,12 +586,37 @@ export function MorphDisplay() {
           
           <button
             onClick={generateVideo}
-            disabled={!targetImageUrl || isGeneratingVideo}
+            disabled={!targetImageUrl || isGeneratingVideo || (morphMode === 'advanced' && featurePoints.length === 0)}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
             {isGeneratingVideo ? 'Generating...' : 'Generate Video'}
           </button>
+          
+          {morphMode === 'advanced' && (
+            <button
+              onClick={() => setShowFeaturePoints(!showFeaturePoints)}
+              disabled={!sourceImageUrl || !targetImageUrl}
+              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+            >
+              {showFeaturePoints ? 'Hide' : 'Show'} Feature Points
+            </button>
+          )}
         </div>
+        
+        {/* Feature Point Selector */}
+        {morphMode === 'advanced' && showFeaturePoints && sourceImageRef.current && targetImageRef.current && (
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-4">
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+              Feature Point Mapping
+            </h3>
+            <FeaturePointSelector
+              sourceImage={sourceImageRef.current}
+              targetImage={targetImageRef.current}
+              featurePoints={featurePoints}
+              onFeaturePointsChange={setFeaturePoints}
+            />
+          </div>
+        )}
         
         {/* Preview */}
         {(morphAmount > 0 || videoFrames.length > 0) && (

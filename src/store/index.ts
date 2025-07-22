@@ -203,6 +203,10 @@ function getDefaultControls(filterId: string): FilterControl[] {
       ]
     case 'morph':
       return [
+        { id: 'morphMode', type: 'select', label: 'Morph Mode', value: 'simple', options: [
+          { value: 'simple', label: 'Simple Crossfade' },
+          { value: 'advanced', label: 'Advanced Morph' }
+        ]},
         { id: 'morphAmount', type: 'slider', label: 'Morph Amount', min: 0, max: 100, value: 0 },
         { id: 'frames', type: 'number', label: 'Total Frames', min: 10, max: 120, value: 30 },
         { id: 'fps', type: 'number', label: 'FPS', min: 10, max: 60, value: 30 },
@@ -211,8 +215,7 @@ function getDefaultControls(filterId: string): FilterControl[] {
           { value: 'ease-in', label: 'Ease In' },
           { value: 'ease-out', label: 'Ease Out' },
           { value: 'ease-in-out', label: 'Ease In-Out' }
-        ]},
-        { id: 'featurePoints', type: 'number', label: 'Feature Points', min: 4, max: 50, value: 16 }
+        ]}
       ]
     default:
       return []
