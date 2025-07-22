@@ -384,7 +384,6 @@ export function MorphDisplay() {
       const ctx = tempCanvas.getContext('2d')!
       
       // Write frames to FFmpeg
-      console.log(`Exporting ${videoFrames.length} frames to video...`)
       for (let i = 0; i < videoFrames.length; i++) {
         // Clear canvas first
         ctx.clearRect(0, 0, tempCanvas.width, tempCanvas.height)
@@ -427,21 +426,83 @@ export function MorphDisplay() {
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream
       const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent)
       
-      if (isIOS || isSafari) {
-        // For Safari/iOS, we need to handle downloads differently
-        const reader = new FileReader()
-        reader.onloadend = () => {
-          const base64data = reader.result as string
-          const link = document.createElement('a')
-          link.href = base64data
-          link.download = 'morph-video.mp4'
-          link.setAttribute('download', 'morph-video.mp4')
-          link.style.display = 'none'
-          document.body.appendChild(link)
-          link.click()
-          document.body.removeChild(link)
+      if (isIOS) {
+        // For iOS, we can't force downloads. Show the video in a new window
+        const url = URL.createObjectURL(blob)
+        
+        // Create a modal to show the video with save instructions
+        const modal = document.createElement('div')
+        modal.style.cssText = `
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0,0,0,0.9);
+          z-index: 9999;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 20px;
+        `
+        
+        const instructions = document.createElement('p')
+        instructions.style.cssText = `
+          color: white;
+          text-align: center;
+          margin-bottom: 20px;
+          font-size: 16px;
+        `
+        instructions.textContent = 'Tap and hold the video, then select "Save Video" to download'
+        
+        const video = document.createElement('video')
+        video.src = url
+        video.controls = true
+        video.style.cssText = `
+          max-width: 100%;
+          max-height: 70vh;
+          border-radius: 8px;
+        `
+        video.setAttribute('playsinline', 'true')
+        
+        const closeButton = document.createElement('button')
+        closeButton.textContent = 'Close'
+        closeButton.style.cssText = `
+          margin-top: 20px;
+          padding: 10px 20px;
+          background: white;
+          border: none;
+          border-radius: 5px;
+          font-size: 16px;
+          cursor: pointer;
+        `
+        closeButton.onclick = () => {
+          document.body.removeChild(modal)
+          URL.revokeObjectURL(url)
         }
-        reader.readAsDataURL(blob)
+        
+        modal.appendChild(instructions)
+        modal.appendChild(video)
+        modal.appendChild(closeButton)
+        document.body.appendChild(modal)
+        
+        // Reset export state
+        setExportProgress(0)
+        setIsExporting(false)
+        setShowDownloadModal(false)
+      } else if (isSafari) {
+        // For Safari desktop, open in new tab
+        const url = URL.createObjectURL(blob)
+        const newWindow = window.open(url, '_blank')
+        if (newWindow) {
+          newWindow.document.title = 'morph-video.mp4'
+        }
+        
+        // Reset export state
+        setExportProgress(0)
+        setIsExporting(false)
+        setShowDownloadModal(false)
       } else {
         // Standard download for other browsers
         const url = URL.createObjectURL(blob)
@@ -512,26 +573,67 @@ export function MorphDisplay() {
       gif.on('finished', (blob) => {
         // Check if we're on iOS Safari
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream
-        const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent)
         
-        if (isIOS || isSafari) {
-          // For Safari/iOS, use data URL
-          const reader = new FileReader()
-          reader.onloadend = () => {
-            const base64data = reader.result as string
-            const link = document.createElement('a')
-            link.href = base64data
-            link.download = 'morph-animation.gif'
-            link.setAttribute('download', 'morph-animation.gif')
-            link.style.display = 'none'
-            document.body.appendChild(link)
-            link.click()
-            document.body.removeChild(link)
+        if (isIOS) {
+          // For iOS, show the GIF in a modal
+          const url = URL.createObjectURL(blob)
+          
+          const modal = document.createElement('div')
+          modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.9);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+          `
+          
+          const instructions = document.createElement('p')
+          instructions.style.cssText = `
+            color: white;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 16px;
+          `
+          instructions.textContent = 'Tap and hold the image, then select "Save Image" to download'
+          
+          const img = document.createElement('img')
+          img.src = url
+          img.style.cssText = `
+            max-width: 100%;
+            max-height: 70vh;
+            border-radius: 8px;
+          `
+          
+          const closeButton = document.createElement('button')
+          closeButton.textContent = 'Close'
+          closeButton.style.cssText = `
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+          `
+          closeButton.onclick = () => {
+            document.body.removeChild(modal)
+            URL.revokeObjectURL(url)
             setExportProgress(0)
             setIsExporting(false)
             setShowDownloadModal(false)
           }
-          reader.readAsDataURL(blob)
+          
+          modal.appendChild(instructions)
+          modal.appendChild(img)
+          modal.appendChild(closeButton)
+          document.body.appendChild(modal)
         } else {
           // Standard download for other browsers
           const url = URL.createObjectURL(blob)
