@@ -284,47 +284,49 @@ export function FeaturePointSelector({
   const addDefaultPoints = () => {
     if (!sourceImage || !targetImage) return
     
-    const width = sourceCanvasRef.current?.width || 800
-    const height = sourceCanvasRef.current?.height || 600
+    const sourceWidth = sourceCanvasRef.current?.width || sourceImage.width
+    const sourceHeight = sourceCanvasRef.current?.height || sourceImage.height
+    const targetWidth = targetCanvasRef.current?.width || targetImage.width
+    const targetHeight = targetCanvasRef.current?.height || targetImage.height
     
     // Add points for common features (simplified)
     const defaultPoints: FeaturePoint[] = [
       // Center
       {
         id: 'center',
-        sourceX: width / 2,
-        sourceY: height / 2,
-        targetX: width / 2,
-        targetY: height / 2
+        sourceX: sourceWidth / 2,
+        sourceY: sourceHeight / 2,
+        targetX: targetWidth / 2,
+        targetY: targetHeight / 2
       },
       // Quarters
       {
         id: 'tl-quarter',
-        sourceX: width * 0.25,
-        sourceY: height * 0.25,
-        targetX: width * 0.25,
-        targetY: height * 0.25
+        sourceX: sourceWidth * 0.25,
+        sourceY: sourceHeight * 0.25,
+        targetX: targetWidth * 0.25,
+        targetY: targetHeight * 0.25
       },
       {
         id: 'tr-quarter',
-        sourceX: width * 0.75,
-        sourceY: height * 0.25,
-        targetX: width * 0.75,
-        targetY: height * 0.25
+        sourceX: sourceWidth * 0.75,
+        sourceY: sourceHeight * 0.25,
+        targetX: targetWidth * 0.75,
+        targetY: targetHeight * 0.25
       },
       {
         id: 'bl-quarter',
-        sourceX: width * 0.25,
-        sourceY: height * 0.75,
-        targetX: width * 0.25,
-        targetY: height * 0.75
+        sourceX: sourceWidth * 0.25,
+        sourceY: sourceHeight * 0.75,
+        targetX: targetWidth * 0.25,
+        targetY: targetHeight * 0.75
       },
       {
         id: 'br-quarter',
-        sourceX: width * 0.75,
-        sourceY: height * 0.75,
-        targetX: width * 0.75,
-        targetY: height * 0.75
+        sourceX: sourceWidth * 0.75,
+        sourceY: sourceHeight * 0.75,
+        targetX: targetWidth * 0.75,
+        targetY: targetHeight * 0.75
       }
     ]
     
@@ -386,7 +388,7 @@ export function FeaturePointSelector({
               onClick={(e) => handleCanvasClick(e, 'source')}
               onTouchStart={(e) => handleCanvasClick(e, 'source')}
               className="w-full h-auto cursor-crosshair touch-none"
-              style={{ maxHeight: '200px', objectFit: 'contain' }}
+              style={{ maxHeight: '200px' }}
             />
           </div>
         </div>
@@ -403,7 +405,7 @@ export function FeaturePointSelector({
               onClick={(e) => handleCanvasClick(e, 'target')}
               onTouchStart={(e) => handleCanvasClick(e, 'target')}
               className="w-full h-auto cursor-crosshair touch-none"
-              style={{ maxHeight: '200px', objectFit: 'contain' }}
+              style={{ maxHeight: '200px' }}
             />
           </div>
         </div>
