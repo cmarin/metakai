@@ -39,18 +39,29 @@ export function FeaturePointSelector({
     // Draw image
     ctx.drawImage(image, 0, 0, canvas.width, canvas.height)
     
+    // Determine point size based on screen size
+    const isMobile = window.innerWidth < 768
+    const pointRadius = isMobile ? 15 : 8
+    const strokeWidth = isMobile ? 3 : 2
+    
     // Draw feature points
     featurePoints.forEach(point => {
       const x = side === 'source' ? point.sourceX : point.targetX
       const y = side === 'source' ? point.sourceY : point.targetY
       
-      // Draw point (bigger for touch)
+      // Draw outer ring for better visibility
       ctx.beginPath()
-      ctx.arc(x, y, 8, 0, Math.PI * 2)
+      ctx.arc(x, y, pointRadius + 2, 0, Math.PI * 2)
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.8)'
+      ctx.fill()
+      
+      // Draw point
+      ctx.beginPath()
+      ctx.arc(x, y, pointRadius, 0, Math.PI * 2)
       ctx.fillStyle = point.id === selectedPointId ? '#ff0000' : '#00ff00'
       ctx.fill()
       ctx.strokeStyle = '#000000'
-      ctx.lineWidth = 2
+      ctx.lineWidth = strokeWidth
       ctx.stroke()
       
       // Draw connections to corresponding point
@@ -90,12 +101,18 @@ export function FeaturePointSelector({
       const x = side === 'source' ? tempPoint.sourceX! : tempPoint.targetX!
       const y = side === 'source' ? tempPoint.sourceY! : tempPoint.targetY!
       
+      // Draw outer ring for better visibility
       ctx.beginPath()
-      ctx.arc(x, y, 8, 0, Math.PI * 2)
+      ctx.arc(x, y, pointRadius + 2, 0, Math.PI * 2)
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.8)'
+      ctx.fill()
+      
+      ctx.beginPath()
+      ctx.arc(x, y, pointRadius, 0, Math.PI * 2)
       ctx.fillStyle = '#ffff00'
       ctx.fill()
       ctx.strokeStyle = '#000000'
-      ctx.lineWidth = 2
+      ctx.lineWidth = strokeWidth
       ctx.stroke()
     }
   }
@@ -170,7 +187,9 @@ export function FeaturePointSelector({
       const clickedPoint = featurePoints.find(point => {
         const px = side === 'source' ? point.sourceX : point.targetX
         const py = side === 'source' ? point.sourceY : point.targetY
-        return Math.sqrt((px - x) ** 2 + (py - y) ** 2) < 15 // Bigger touch target
+        const isMobile = window.innerWidth < 768
+        const clickRadius = isMobile ? 20 : 15
+        return Math.sqrt((px - x) ** 2 + (py - y) ** 2) < clickRadius
       })
       
       if (clickedPoint) {

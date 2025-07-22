@@ -366,13 +366,10 @@ export function MorphDisplay() {
       return
     }
     
-    if (!ffmpegRef.current || !ffmpegLoaded) {
-      alert('Video encoder is still loading. Please try again.')
-      return
-    }
+    // Check if we should use MP4 or fallback to GIF
+    const canUseMP4 = ffmpegRef.current && ffmpegLoaded && typeof SharedArrayBuffer !== 'undefined'
     
-    // Check if SharedArrayBuffer is available (required for FFmpeg)
-    if (typeof SharedArrayBuffer === 'undefined') {
+    if (!canUseMP4) {
       // Fallback to GIF export
       downloadAsGIF()
       return
@@ -454,7 +451,8 @@ export function MorphDisplay() {
         workers: 2,
         quality: 10,
         width: sourceImageRef.current!.width,
-        height: sourceImageRef.current!.height
+        height: sourceImageRef.current!.height,
+        workerScript: '/gif.worker.js'
       })
       
       // Create a temporary canvas for frame export
@@ -469,6 +467,10 @@ export function MorphDisplay() {
         ctx.putImageData(frame.imageData, 0, 0)
         gif.addFrame(ctx, { delay: 1000 / fps, copy: true })
         setExportProgress(Math.round((index + 1) / videoFrames.length * 100))
+      })
+      
+      gif.on('progress', (progress) => {
+        setExportProgress(Math.round(progress * 100))
       })
       
       gif.on('finished', (blob) => {
