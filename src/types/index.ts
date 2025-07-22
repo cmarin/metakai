@@ -59,3 +59,17 @@ export interface GelPaintSettings {
   viscosity: number
   lightDirection: { x: number; y: number; z: number }
 }
+
+export interface FeaturePoint {
+  x: number
+  y: number
+  id?: string
+}
+
+export const ColorSpace = {
+  RGB: 'rgb',
+  HSV: 'hsv',
+  LAB: 'lab'
+} as const
+
+export type ColorSpace = typeof ColorSpace[keyof typeof ColorSpace]

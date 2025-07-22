@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { MorphEngine } from './morph-engine'
-import type { FeaturePoint } from '../../types'
+import type { FeaturePoint } from './morph-engine'
 
 // Mock canvas and context globally
 const mockGetImageData = vi.fn()
@@ -41,8 +41,6 @@ const createMockCanvas = (context: any) => ({
 })
 
 describe('MorphEngine', () => {
-  let mockSourceImageData: ImageData
-  let mockTargetImageData: ImageData
   let mockOutputImageData: ImageData
   
   beforeEach(() => {
@@ -61,12 +59,10 @@ describe('MorphEngine', () => {
         data,
         width,
         height,
-        colorSpace: 'srgb' as ColorSpace
+        colorSpace: 'srgb' as PredefinedColorSpace
       }
     }
     
-    mockSourceImageData = createMockImageData(200, 200, 100)
-    mockTargetImageData = createMockImageData(200, 200, 200)
     mockOutputImageData = createMockImageData(200, 200, 150)
     
     // Setup mock returns
@@ -89,12 +85,12 @@ describe('MorphEngine', () => {
   })
   
   it('should create engine with source and target images', () => {
-    const engine = new MorphEngine(mockSourceImageData, mockTargetImageData)
+    const engine = new MorphEngine(200, 200)
     expect(engine).toBeDefined()
   })
   
   it('should return output image data when morphing', () => {
-    const engine = new MorphEngine(mockSourceImageData, mockTargetImageData)
+    const engine = new MorphEngine(200, 200)
     const featurePoints: FeaturePoint[] = []
     
     const result = engine.morph(featurePoints, 0.5)
@@ -106,7 +102,7 @@ describe('MorphEngine', () => {
   })
   
   it('should handle empty feature points', () => {
-    const engine = new MorphEngine(mockSourceImageData, mockTargetImageData)
+    const engine = new MorphEngine(200, 200)
     
     const result = engine.morph([], 0.5)
     
@@ -115,7 +111,7 @@ describe('MorphEngine', () => {
   })
   
   it('should clamp t value between 0 and 1', () => {
-    const engine = new MorphEngine(mockSourceImageData, mockTargetImageData)
+    const engine = new MorphEngine(200, 200)
     
     // Test negative t
     const result1 = engine.morph([], -0.5)
@@ -130,7 +126,7 @@ describe('MorphEngine', () => {
   })
   
   it('should add corner points when feature points are provided', () => {
-    const engine = new MorphEngine(mockSourceImageData, mockTargetImageData)
+    const engine = new MorphEngine(200, 200)
     const featurePoints: FeaturePoint[] = [
       { id: '1', sourceX: 100, sourceY: 100, targetX: 100, targetY: 100 }
     ]
@@ -142,7 +138,7 @@ describe('MorphEngine', () => {
   })
   
   it('should handle different interpolation values', () => {
-    const engine = new MorphEngine(mockSourceImageData, mockTargetImageData)
+    const engine = new MorphEngine(200, 200)
     
     // Test t = 0 (should show source)
     engine.morph([], 0)
@@ -158,7 +154,7 @@ describe('MorphEngine', () => {
   })
   
   it('should handle feature points with extreme coordinates', () => {
-    const engine = new MorphEngine(mockSourceImageData, mockTargetImageData)
+    const engine = new MorphEngine(200, 200)
     const featurePoints: FeaturePoint[] = [
       { id: '1', sourceX: -100, sourceY: -100, targetX: 500, targetY: 500 }
     ]

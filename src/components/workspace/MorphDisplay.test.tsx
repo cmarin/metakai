@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { MorphDisplay } from './MorphDisplay'
 import { useStore } from '../../store'
-import { useCallback } from 'react'
 
 // Mock dependencies
 vi.mock('../../store')
@@ -68,17 +67,34 @@ const mockStore = {
   setMorphFps: vi.fn(),
   setMorphTransitionType: vi.fn(),
   workspace: {
-    image: null
+    image: null,
+    zoom: 1,
+    pan: { x: 0, y: 0 },
+    isDragging: false,
   },
   filter: {
+    activeFilter: null,
     controls: [
-      { id: 'morphMode', type: 'select', label: 'Morph Mode', value: 'advanced' },
-      { id: 'morphAmount', type: 'slider', label: 'Morph Amount', value: 50 },
-      { id: 'frames', type: 'number', label: 'Total Frames', value: 30 },
-      { id: 'fps', type: 'number', label: 'FPS', value: 30 },
-      { id: 'transitionType', type: 'select', label: 'Transition Type', value: 'smooth' }
-    ]
-  }
+      { id: 'morphMode', type: 'select' as const, label: 'Morph Mode', value: 'advanced' },
+      { id: 'morphAmount', type: 'slider' as const, label: 'Morph Amount', value: 50 },
+      { id: 'frames', type: 'number' as const, label: 'Total Frames', value: 30 },
+      { id: 'fps', type: 'number' as const, label: 'FPS', value: 30 },
+      { id: 'transitionType', type: 'select' as const, label: 'Transition Type', value: 'smooth' }
+    ],
+    history: [],
+    historyIndex: -1,
+  },
+  theme: 'light' as const,
+  mobileDrawerOpen: false,
+  setImage: vi.fn(),
+  setZoom: vi.fn(),
+  setPan: vi.fn(),
+  setActiveFilter: vi.fn(),
+  updateControl: vi.fn(),
+  undo: vi.fn(),
+  redo: vi.fn(),
+  toggleTheme: vi.fn(),
+  setMobileDrawerOpen: vi.fn(),
 }
 
 describe('MorphDisplay', () => {
