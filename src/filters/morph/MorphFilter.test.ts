@@ -13,10 +13,14 @@ vi.mock('pixi.js', () => ({
 
 describe('MorphFilter', () => {
   let morphFilter: MorphFilter
+  let mockApp: any
+  let mockContainer: any
 
   beforeEach(() => {
     vi.clearAllMocks()
-    morphFilter = new MorphFilter()
+    mockApp = { stage: {} }
+    mockContainer = { filters: null }
+    morphFilter = new MorphFilter(mockApp, mockContainer)
   })
 
   it('should extend Filter base class', () => {
@@ -90,13 +94,8 @@ describe('MorphFilter', () => {
   it('should update filter uniforms when controls change', () => {
     const filter = morphFilter.createFilter()
     
-    // Update morph amount control
-    morphFilter.controls = [
-      { id: 'morphAmount', type: 'slider', label: 'Morph Amount', min: 0, max: 100, value: 50 }
-    ]
-    
-    // Trigger update by calling the protected method through any
-    ;(morphFilter as any).updateFilter()
+    // Update morph amount control using public method
+    morphFilter.updateControl('morphAmount', 50)
     
     expect((filter as any).uniforms.morphAmount).toBe(0.5)
   })
@@ -104,13 +103,10 @@ describe('MorphFilter', () => {
   it('should handle missing controls gracefully', () => {
     const filter = morphFilter.createFilter()
     
-    // Set empty controls
-    morphFilter.controls = []
+    // Try to update a non-existent control
+    morphFilter.updateControl('nonExistentControl', 100)
     
-    // Should not throw
-    expect(() => (morphFilter as any).updateFilter()).not.toThrow()
-    
-    // Should use default value
+    // Should use default value since the control doesn't exist
     expect((filter as any).uniforms.morphAmount).toBe(0)
   })
 })
