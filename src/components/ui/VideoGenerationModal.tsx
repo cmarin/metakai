@@ -1,6 +1,5 @@
-import React, { useRef, useEffect } from 'react'
+import { useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { X, Play, Pause, Download, RotateCcw } from 'lucide-react'
 
 interface VideoGenerationModalProps {
   isOpen: boolean
@@ -67,7 +66,10 @@ export function VideoGenerationModal({
             onClick={onClose}
             className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           >
-            <X size={20} className="text-gray-500" />
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
           </button>
         </div>
         
@@ -109,7 +111,10 @@ export function VideoGenerationModal({
               className="p-3 rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors"
               title="Reset"
             >
-              <RotateCcw size={20} />
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="1 4 1 10 7 10"></polyline>
+                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+              </svg>
             </button>
             
             {isPlaying ? (
@@ -118,7 +123,10 @@ export function VideoGenerationModal({
                 className="p-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors"
                 title="Pause"
               >
-                <Pause size={24} />
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="6" y="4" width="4" height="16"></rect>
+                  <rect x="14" y="4" width="4" height="16"></rect>
+                </svg>
               </button>
             ) : (
               <button
@@ -126,7 +134,9 @@ export function VideoGenerationModal({
                 className="p-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors"
                 title="Play"
               >
-                <Play size={24} />
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
               </button>
             )}
             
@@ -135,7 +145,11 @@ export function VideoGenerationModal({
               className="p-3 rounded-lg bg-green-600 hover:bg-green-700 text-white transition-colors"
               title="Download"
             >
-              <Download size={20} />
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
             </button>
           </div>
           

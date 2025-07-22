@@ -8,6 +8,10 @@ vi.mock('./components/workspace/InteractiveFilterDisplay', () => ({
   InteractiveFilterDisplay: () => <div data-testid="interactive-filter-display">InteractiveFilterDisplay</div>
 }))
 
+vi.mock('./components/workspace/MorphDisplay', () => ({
+  MorphDisplay: () => <div data-testid="morph-display">MorphDisplay</div>
+}))
+
 vi.mock('./components/ui/ModernToolbar', () => ({
   ModernToolbar: () => <div data-testid="modern-toolbar">ModernToolbar</div>
 }))
@@ -34,7 +38,12 @@ describe('App', () => {
     
     // Default store mock
     mockUseStore.mockImplementation((selector: any) => {
-      const state = { theme: 'light' }
+      const state = { 
+        theme: 'light',
+        filter: { 
+          activeFilter: null 
+        }
+      }
       return selector ? selector(state) : state
     })
   })
@@ -69,7 +78,12 @@ describe('App', () => {
 
   it('should apply dark theme when theme is dark', () => {
     mockUseStore.mockImplementation((selector: any) => {
-      const state = { theme: 'dark' }
+      const state = { 
+        theme: 'dark',
+        filter: { 
+          activeFilter: null 
+        }
+      }
       return selector ? selector(state) : state
     })
     
@@ -85,7 +99,12 @@ describe('App', () => {
     
     // Change to dark theme
     mockUseStore.mockImplementation((selector: any) => {
-      const state = { theme: 'dark' }
+      const state = { 
+        theme: 'dark',
+        filter: { 
+          activeFilter: null 
+        }
+      }
       return selector ? selector(state) : state
     })
     
@@ -94,7 +113,12 @@ describe('App', () => {
     
     // Change back to light theme
     mockUseStore.mockImplementation((selector: any) => {
-      const state = { theme: 'light' }
+      const state = { 
+        theme: 'light',
+        filter: { 
+          activeFilter: null 
+        }
+      }
       return selector ? selector(state) : state
     })
     
@@ -110,7 +134,7 @@ describe('App', () => {
     const selector = mockUseStore.mock.calls[0][0]
     
     // Test the selector
-    expect(selector({ theme: 'light' })).toBe('light')
-    expect(selector({ theme: 'dark' })).toBe('dark')
+    expect(selector({ theme: 'light', filter: { activeFilter: null } })).toBe('light')
+    expect(selector({ theme: 'dark', filter: { activeFilter: null } })).toBe('dark')
   })
 })
