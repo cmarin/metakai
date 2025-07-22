@@ -41,6 +41,8 @@ export function MorphDisplay() {
   const [showDownloadModal, setShowDownloadModal] = useState(false)
   const [showVideoModal, setShowVideoModal] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
+  const [sourceImageLoaded, setSourceImageLoaded] = useState(false)
+  const [targetImageLoaded, setTargetImageLoaded] = useState(false)
   
   const image = useStore((state) => state.workspace.image)
   const controls = useStore((state) => state.filter.controls)
@@ -84,12 +86,16 @@ export function MorphDisplay() {
   
   // Load source image
   useEffect(() => {
-    if (!sourceImageUrl) return
+    if (!sourceImageUrl) {
+      setSourceImageLoaded(false)
+      return
+    }
     
     const img = new Image()
     img.crossOrigin = 'anonymous'
     img.onload = () => {
       sourceImageRef.current = img
+      setSourceImageLoaded(true)
       drawSourceImage()
       updateMorphPreview()
     }
@@ -98,12 +104,16 @@ export function MorphDisplay() {
   
   // Load target image
   useEffect(() => {
-    if (!targetImageUrl) return
+    if (!targetImageUrl) {
+      setTargetImageLoaded(false)
+      return
+    }
     
     const img = new Image()
     img.crossOrigin = 'anonymous'
     img.onload = () => {
       targetImageRef.current = img
+      setTargetImageLoaded(true)
       drawTargetImage()
       updateMorphPreview()
     }
@@ -374,17 +384,27 @@ export function MorphDisplay() {
       const ctx = tempCanvas.getContext('2d')!
       
       // Write frames to FFmpeg
+      console.log(`Exporting ${videoFrames.length} frames to video...`)
       for (let i = 0; i < videoFrames.length; i++) {
+        // Clear canvas first
+        ctx.clearRect(0, 0, tempCanvas.width, tempCanvas.height)
         ctx.putImageData(videoFrames[i].imageData, 0, 0)
         
         // Convert canvas to blob
-        const blob = await new Promise<Blob>((resolve) => {
-          tempCanvas.toBlob((blob) => resolve(blob!), 'image/png')
+        const blob = await new Promise<Blob>((resolve, reject) => {
+          tempCanvas.toBlob((blob) => {
+            if (blob) {
+              resolve(blob)
+            } else {
+              reject(new Error('Failed to create blob from canvas'))
+            }
+          }, 'image/png')
         })
         
         // Write frame to FFmpeg
         const frameData = await fetchFile(blob)
         await ffmpeg.writeFile(`frame_${String(i).padStart(4, '0')}.png`, frameData)
+        setExportProgress(Math.round((i + 1) / videoFrames.length * 50)) // 50% for frame export
       }
       
       // Create video from frames
@@ -402,14 +422,38 @@ export function MorphDisplay() {
       
       // Create download link
       const blob = new Blob([data], { type: 'video/mp4' })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = 'morph-video.mp4'
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      URL.revokeObjectURL(url)
+      
+      // Check if we're on iOS Safari
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream
+      const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent)
+      
+      if (isIOS || isSafari) {
+        // For Safari/iOS, we need to handle downloads differently
+        const reader = new FileReader()
+        reader.onloadend = () => {
+          const base64data = reader.result as string
+          const link = document.createElement('a')
+          link.href = base64data
+          link.download = 'morph-video.mp4'
+          link.setAttribute('download', 'morph-video.mp4')
+          link.style.display = 'none'
+          document.body.appendChild(link)
+          link.click()
+          document.body.removeChild(link)
+        }
+        reader.readAsDataURL(blob)
+      } else {
+        // Standard download for other browsers
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = 'morph-video.mp4'
+        a.setAttribute('download', 'morph-video.mp4')
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
+      }
       
       // Clean up FFmpeg files
       for (let i = 0; i < videoFrames.length; i++) {
@@ -466,17 +510,43 @@ export function MorphDisplay() {
       })
       
       gif.on('finished', (blob) => {
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = 'morph-animation.gif'
-        document.body.appendChild(a)
-        a.click()
-        document.body.removeChild(a)
-        URL.revokeObjectURL(url)
-        setExportProgress(0)
-        setIsExporting(false)
-        setShowDownloadModal(false)
+        // Check if we're on iOS Safari
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream
+        const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent)
+        
+        if (isIOS || isSafari) {
+          // For Safari/iOS, use data URL
+          const reader = new FileReader()
+          reader.onloadend = () => {
+            const base64data = reader.result as string
+            const link = document.createElement('a')
+            link.href = base64data
+            link.download = 'morph-animation.gif'
+            link.setAttribute('download', 'morph-animation.gif')
+            link.style.display = 'none'
+            document.body.appendChild(link)
+            link.click()
+            document.body.removeChild(link)
+            setExportProgress(0)
+            setIsExporting(false)
+            setShowDownloadModal(false)
+          }
+          reader.readAsDataURL(blob)
+        } else {
+          // Standard download for other browsers
+          const url = URL.createObjectURL(blob)
+          const a = document.createElement('a')
+          a.href = url
+          a.download = 'morph-animation.gif'
+          a.setAttribute('download', 'morph-animation.gif')
+          document.body.appendChild(a)
+          a.click()
+          document.body.removeChild(a)
+          URL.revokeObjectURL(url)
+          setExportProgress(0)
+          setIsExporting(false)
+          setShowDownloadModal(false)
+        }
       })
       
       gif.render()
@@ -601,7 +671,7 @@ export function MorphDisplay() {
         </div>
         
         {/* Feature Point Selector */}
-        {morphMode === 'advanced' && showFeaturePoints && sourceImageRef.current && targetImageRef.current && (
+        {morphMode === 'advanced' && showFeaturePoints && sourceImageLoaded && targetImageLoaded && sourceImageRef.current && targetImageRef.current && (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-4">
             <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
               Feature Point Mapping
