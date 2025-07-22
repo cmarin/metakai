@@ -20,11 +20,28 @@ export function FeaturePointSelector({
   const [isAddingPoint, setIsAddingPoint] = useState(false)
   const [nextPointSide, setNextPointSide] = useState<'source' | 'target'>('source')
   const [tempPoint, setTempPoint] = useState<Partial<FeaturePoint> | null>(null)
+  const animationFrameRef = useRef<number>(0)
   
-  // Draw images and points
+  // Draw images and points with animation
   useEffect(() => {
-    drawCanvas('source')
-    drawCanvas('target')
+    const isMobile = window.innerWidth < 768
+    
+    if (isMobile && (featurePoints.length > 0 || tempPoint)) {
+      // Animate on mobile for better visibility
+      const animate = () => {
+        animationFrameRef.current = (animationFrameRef.current + 1) % 120
+        drawCanvas('source')
+        drawCanvas('target')
+        requestAnimationFrame(animate)
+      }
+      const animId = requestAnimationFrame(animate)
+      
+      return () => cancelAnimationFrame(animId)
+    } else {
+      // Static drawing on desktop
+      drawCanvas('source')
+      drawCanvas('target')
+    }
   }, [sourceImage, targetImage, featurePoints, selectedPointId, tempPoint])
   
   const drawCanvas = (side: 'source' | 'target') => {
@@ -41,28 +58,45 @@ export function FeaturePointSelector({
     
     // Determine point size based on screen size
     const isMobile = window.innerWidth < 768
-    const pointRadius = isMobile ? 15 : 8
-    const strokeWidth = isMobile ? 3 : 2
+    const baseRadius = isMobile ? 20 : 10
+    // Add pulsing effect on mobile
+    const pulseAmount = isMobile ? Math.sin(animationFrameRef.current * 0.05) * 3 : 0
+    const pointRadius = baseRadius + pulseAmount
     
     // Draw feature points
     featurePoints.forEach(point => {
       const x = side === 'source' ? point.sourceX : point.targetX
       const y = side === 'source' ? point.sourceY : point.targetY
       
-      // Draw outer ring for better visibility
+      // Draw shadow for better visibility
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.5)'
+      ctx.shadowBlur = 5
+      ctx.shadowOffsetX = 2
+      ctx.shadowOffsetY = 2
+      
+      // Draw outer white ring for contrast
       ctx.beginPath()
-      ctx.arc(x, y, pointRadius + 2, 0, Math.PI * 2)
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.8)'
+      ctx.arc(x, y, pointRadius + 4, 0, Math.PI * 2)
+      ctx.fillStyle = '#ffffff'
       ctx.fill()
       
-      // Draw point
+      // Draw black border
+      ctx.beginPath()
+      ctx.arc(x, y, pointRadius + 2, 0, Math.PI * 2)
+      ctx.fillStyle = '#000000'
+      ctx.fill()
+      
+      // Reset shadow
+      ctx.shadowColor = 'transparent'
+      ctx.shadowBlur = 0
+      ctx.shadowOffsetX = 0
+      ctx.shadowOffsetY = 0
+      
+      // Draw inner colored point
       ctx.beginPath()
       ctx.arc(x, y, pointRadius, 0, Math.PI * 2)
       ctx.fillStyle = point.id === selectedPointId ? '#ff0000' : '#00ff00'
       ctx.fill()
-      ctx.strokeStyle = '#000000'
-      ctx.lineWidth = strokeWidth
-      ctx.stroke()
       
       // Draw connections to corresponding point
       if (featurePoints.length > 1) {
@@ -101,19 +135,35 @@ export function FeaturePointSelector({
       const x = side === 'source' ? tempPoint.sourceX! : tempPoint.targetX!
       const y = side === 'source' ? tempPoint.sourceY! : tempPoint.targetY!
       
-      // Draw outer ring for better visibility
+      // Draw shadow for better visibility
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.5)'
+      ctx.shadowBlur = 5
+      ctx.shadowOffsetX = 2
+      ctx.shadowOffsetY = 2
+      
+      // Draw outer white ring for contrast
       ctx.beginPath()
-      ctx.arc(x, y, pointRadius + 2, 0, Math.PI * 2)
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.8)'
+      ctx.arc(x, y, pointRadius + 4, 0, Math.PI * 2)
+      ctx.fillStyle = '#ffffff'
       ctx.fill()
       
+      // Draw black border
+      ctx.beginPath()
+      ctx.arc(x, y, pointRadius + 2, 0, Math.PI * 2)
+      ctx.fillStyle = '#000000'
+      ctx.fill()
+      
+      // Reset shadow
+      ctx.shadowColor = 'transparent'
+      ctx.shadowBlur = 0
+      ctx.shadowOffsetX = 0
+      ctx.shadowOffsetY = 0
+      
+      // Draw inner yellow point (temp/pending)
       ctx.beginPath()
       ctx.arc(x, y, pointRadius, 0, Math.PI * 2)
       ctx.fillStyle = '#ffff00'
       ctx.fill()
-      ctx.strokeStyle = '#000000'
-      ctx.lineWidth = strokeWidth
-      ctx.stroke()
     }
   }
   
@@ -188,7 +238,7 @@ export function FeaturePointSelector({
         const px = side === 'source' ? point.sourceX : point.targetX
         const py = side === 'source' ? point.sourceY : point.targetY
         const isMobile = window.innerWidth < 768
-        const clickRadius = isMobile ? 20 : 15
+        const clickRadius = isMobile ? 25 : 15
         return Math.sqrt((px - x) ** 2 + (py - y) ** 2) < clickRadius
       })
       

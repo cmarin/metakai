@@ -6,6 +6,7 @@ import GIF from 'gif.js'
 import { FeaturePointSelector } from './FeaturePointSelector'
 import { MorphEngine } from '../../utils/morphing/morph-engine'
 import type { FeaturePoint } from '../../utils/morphing/morph-engine'
+import { DownloadModal } from '../ui/DownloadModal'
 
 interface VideoFrame {
   imageData: ImageData
@@ -38,6 +39,8 @@ export function MorphDisplay() {
   const [featurePoints, setFeaturePoints] = useState<FeaturePoint[]>([])
   const [morphMode, setMorphMode] = useState<'simple' | 'advanced'>('simple')
   const morphEngineRef = useRef<MorphEngine | null>(null)
+  const [showDownloadModal, setShowDownloadModal] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
   
   const image = useStore((state) => state.workspace.image)
   const controls = useStore((state) => state.filter.controls)
@@ -360,22 +363,15 @@ export function MorphDisplay() {
     }
   }
   
-  const downloadVideo = async () => {
+  const downloadMP4 = async () => {
     if (videoFrames.length === 0) {
       alert('Please generate a video first')
-      return
-    }
-    
-    // Check if we should use MP4 or fallback to GIF
-    const canUseMP4 = ffmpegRef.current && ffmpegLoaded && typeof SharedArrayBuffer !== 'undefined'
-    
-    if (!canUseMP4) {
-      // Fallback to GIF export
-      downloadAsGIF()
+      setShowDownloadModal(false)
       return
     }
     
     try {
+      setIsExporting(true)
       setExportProgress(0)
       const ffmpeg = ffmpegRef.current
       
@@ -431,20 +427,25 @@ export function MorphDisplay() {
       await ffmpeg.deleteFile('output.mp4')
       
       setExportProgress(0)
+      setIsExporting(false)
+      setShowDownloadModal(false)
     } catch (error) {
       console.error('Failed to export video:', error)
       alert('Failed to export video. Please try again.')
       setExportProgress(0)
+      setIsExporting(false)
     }
   }
   
-  const downloadAsGIF = () => {
+  const downloadGIF = () => {
     if (videoFrames.length === 0) {
       alert('Please generate a video first')
+      setShowDownloadModal(false)
       return
     }
     
     try {
+      setIsExporting(true)
       setExportProgress(0)
       
       const gif = new GIF({
@@ -483,6 +484,8 @@ export function MorphDisplay() {
         document.body.removeChild(a)
         URL.revokeObjectURL(url)
         setExportProgress(0)
+        setIsExporting(false)
+        setShowDownloadModal(false)
       })
       
       gif.render()
@@ -490,6 +493,7 @@ export function MorphDisplay() {
       console.error('Failed to export GIF:', error)
       alert('Failed to export animation. Please try again.')
       setExportProgress(0)
+      setIsExporting(false)
     }
   }
   
@@ -672,12 +676,10 @@ export function MorphDisplay() {
                   </button>
                   
                   <button
-                    onClick={downloadVideo}
-                    disabled={exportProgress > 0}
-                    className="flex-1 px-3 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    onClick={() => setShowDownloadModal(true)}
+                    className="flex-1 px-3 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700"
                   >
-                    {exportProgress > 0 ? `${exportProgress}%` : 
-                     (typeof SharedArrayBuffer !== 'undefined' ? 'Download MP4' : 'Download GIF')}
+                    Download
                   </button>
                 </div>
                 
@@ -702,6 +704,17 @@ export function MorphDisplay() {
           </button>
         )}
       </div>
+      
+      {/* Download Modal */}
+      <DownloadModal
+        isOpen={showDownloadModal}
+        onClose={() => setShowDownloadModal(false)}
+        onDownloadMP4={downloadMP4}
+        onDownloadGIF={downloadGIF}
+        isExporting={isExporting}
+        exportProgress={exportProgress}
+        canUseMP4={ffmpegRef.current && ffmpegLoaded && typeof SharedArrayBuffer !== 'undefined'}
+      />
     </div>
   )
 }
