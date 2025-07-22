@@ -44,9 +44,9 @@ export function FeaturePointSelector({
       const x = side === 'source' ? point.sourceX : point.targetX
       const y = side === 'source' ? point.sourceY : point.targetY
       
-      // Draw point
+      // Draw point (bigger for touch)
       ctx.beginPath()
-      ctx.arc(x, y, 5, 0, Math.PI * 2)
+      ctx.arc(x, y, 8, 0, Math.PI * 2)
       ctx.fillStyle = point.id === selectedPointId ? '#ff0000' : '#00ff00'
       ctx.fill()
       ctx.strokeStyle = '#000000'
@@ -91,7 +91,7 @@ export function FeaturePointSelector({
       const y = side === 'source' ? tempPoint.sourceY! : tempPoint.targetY!
       
       ctx.beginPath()
-      ctx.arc(x, y, 5, 0, Math.PI * 2)
+      ctx.arc(x, y, 8, 0, Math.PI * 2)
       ctx.fillStyle = '#ffff00'
       ctx.fill()
       ctx.strokeStyle = '#000000'
@@ -100,13 +100,35 @@ export function FeaturePointSelector({
     }
   }
   
-  const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>, side: 'source' | 'target') => {
-    const canvas = e.currentTarget
+  const getCoordinatesFromEvent = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>, canvas: HTMLCanvasElement) => {
     const rect = canvas.getBoundingClientRect()
     const scaleX = canvas.width / rect.width
     const scaleY = canvas.height / rect.height
-    const x = (e.clientX - rect.left) * scaleX
-    const y = (e.clientY - rect.top) * scaleY
+    
+    let clientX: number
+    let clientY: number
+    
+    if ('touches' in e) {
+      // Touch event
+      const touch = e.touches[0]
+      clientX = touch.clientX
+      clientY = touch.clientY
+    } else {
+      // Mouse event
+      clientX = e.clientX
+      clientY = e.clientY
+    }
+    
+    const x = (clientX - rect.left) * scaleX
+    const y = (clientY - rect.top) * scaleY
+    
+    return { x, y }
+  }
+  
+  const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>, side: 'source' | 'target') => {
+    e.preventDefault() // Prevent default touch behavior
+    const canvas = e.currentTarget
+    const { x, y } = getCoordinatesFromEvent(e, canvas)
     
     if (isAddingPoint) {
       if (side === nextPointSide) {
@@ -148,7 +170,7 @@ export function FeaturePointSelector({
       const clickedPoint = featurePoints.find(point => {
         const px = side === 'source' ? point.sourceX : point.targetX
         const py = side === 'source' ? point.sourceY : point.targetY
-        return Math.sqrt((px - x) ** 2 + (py - y) ** 2) < 10
+        return Math.sqrt((px - x) ** 2 + (py - y) ** 2) < 15 // Bigger touch target
       })
       
       if (clickedPoint) {
@@ -231,19 +253,19 @@ export function FeaturePointSelector({
             setTempPoint(null)
             setNextPointSide('source')
           }}
-          className={`px-3 py-1 rounded text-sm ${
+          className={`px-4 py-2 rounded text-sm min-h-[44px] ${
             isAddingPoint 
               ? 'bg-green-600 text-white' 
               : 'bg-gray-600 text-white hover:bg-gray-700'
           }`}
         >
-          {isAddingPoint ? `Click ${nextPointSide} image` : 'Add Point'}
+          {isAddingPoint ? `Tap ${nextPointSide} image` : 'Add Point'}
         </button>
         
         <button
           onClick={deleteSelectedPoint}
           disabled={!selectedPointId}
-          className="px-3 py-1 bg-red-600 text-white rounded text-sm hover:bg-red-700 disabled:bg-gray-400"
+          className="px-4 py-2 bg-red-600 text-white rounded text-sm hover:bg-red-700 disabled:bg-gray-400 min-h-[44px]"
         >
           Delete Selected
         </button>
@@ -251,20 +273,20 @@ export function FeaturePointSelector({
         <button
           onClick={clearAllPoints}
           disabled={featurePoints.length === 0}
-          className="px-3 py-1 bg-yellow-600 text-white rounded text-sm hover:bg-yellow-700 disabled:bg-gray-400"
+          className="px-4 py-2 bg-yellow-600 text-white rounded text-sm hover:bg-yellow-700 disabled:bg-gray-400 min-h-[44px]"
         >
           Clear All
         </button>
         
         <button
           onClick={addDefaultPoints}
-          className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
+          className="px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 min-h-[44px]"
         >
           Auto Points
         </button>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-2 md:gap-4">
         <div>
           <h4 className="text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">
             Source Points ({featurePoints.length})
@@ -275,8 +297,9 @@ export function FeaturePointSelector({
               width={sourceImage?.width || 400}
               height={sourceImage?.height || 300}
               onClick={(e) => handleCanvasClick(e, 'source')}
-              className="w-full h-auto cursor-crosshair"
-              style={{ maxHeight: '300px', objectFit: 'contain' }}
+              onTouchStart={(e) => handleCanvasClick(e, 'source')}
+              className="w-full h-auto cursor-crosshair touch-none"
+              style={{ maxHeight: '200px', objectFit: 'contain' }}
             />
           </div>
         </div>
@@ -291,16 +314,17 @@ export function FeaturePointSelector({
               width={targetImage?.width || 400}
               height={targetImage?.height || 300}
               onClick={(e) => handleCanvasClick(e, 'target')}
-              className="w-full h-auto cursor-crosshair"
-              style={{ maxHeight: '300px', objectFit: 'contain' }}
+              onTouchStart={(e) => handleCanvasClick(e, 'target')}
+              className="w-full h-auto cursor-crosshair touch-none"
+              style={{ maxHeight: '200px', objectFit: 'contain' }}
             />
           </div>
         </div>
       </div>
       
-      <div className="text-xs text-gray-600 dark:text-gray-400 text-center">
-        Click "Add Point" then click corresponding features in both images.
-        Green points are placed, red is selected.
+      <div className="text-xs text-gray-600 dark:text-gray-400 text-center px-2">
+        Tap "Add Point" then tap corresponding features in both images.
+        Green = placed, red = selected, yellow = pending.
       </div>
     </div>
   )

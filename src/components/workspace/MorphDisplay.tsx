@@ -500,9 +500,9 @@ export function MorphDisplay() {
   }, [])
   
   return (
-    <div className="h-full flex flex-col bg-gray-50 dark:bg-gray-900">
+    <div className="h-full flex flex-col bg-gray-50 dark:bg-gray-900 overflow-hidden">
       {/* Main content area */}
-      <div className="flex-1 overflow-auto p-4">
+      <div className="flex-1 overflow-auto p-4 pb-20">
         {/* Side-by-side images layout */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           {/* Source Image */}
@@ -646,7 +646,7 @@ export function MorphDisplay() {
         
         {/* Video controls */}
         {videoFrames.length > 0 && showControls && (
-          <div className="fixed inset-x-0 bottom-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4 shadow-lg z-20">
+          <div className="fixed inset-x-0 bottom-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-3 shadow-lg z-20 safe-area-inset-bottom">
             <div className="max-w-screen-lg mx-auto">
               <div className="flex justify-between items-center mb-2">
                 <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Video Controls</h3>
@@ -660,21 +660,21 @@ export function MorphDisplay() {
                 </button>
               </div>
               
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <div className="flex gap-2">
                   <button
                     onClick={isPlaying ? stopVideo : playVideo}
-                    className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                    className="flex-1 px-3 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700"
                   >
-                    {isPlaying ? 'Stop' : 'Play'} Preview
+                    {isPlaying ? 'Stop' : 'Play'}
                   </button>
                   
                   <button
                     onClick={downloadVideo}
                     disabled={exportProgress > 0}
-                    className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    className="flex-1 px-3 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
                   >
-                    {exportProgress > 0 ? `Exporting... ${exportProgress}%` : 
+                    {exportProgress > 0 ? `${exportProgress}%` : 
                      (typeof SharedArrayBuffer !== 'undefined' ? 'Download MP4' : 'Download GIF')}
                   </button>
                 </div>
