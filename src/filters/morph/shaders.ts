@@ -1,4 +1,4 @@
-export const MorphAppShader = `
+export const MorphShader = `
 precision mediump float;
 
 uniform sampler2D uTexture;

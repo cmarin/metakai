@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { InteractiveFilterDisplay } from './components/workspace/InteractiveFilterDisplay'
-import { MorphAppDisplay } from './components/workspace/MorphAppDisplay'
+import { MorphDisplay } from './components/workspace/MorphDisplay'
 import { ModernToolbar } from './components/ui/ModernToolbar'
 import { ModernControlPanel } from './components/ui/ModernControlPanel'
 import { MobileControlDrawer } from './components/ui/MobileControlDrawer'
@@ -26,8 +26,8 @@ function App() {
       
       <main className="flex-1 flex overflow-hidden">
         <div className="flex-1 relative bg-gray-100 dark:bg-gray-900">
-          {activeFilter?.id === 'morphapp' ? (
-            <MorphAppDisplay />
+          {activeFilter?.id === 'morph' ? (
+            <MorphDisplay />
           ) : (
             <InteractiveFilterDisplay />
           )}

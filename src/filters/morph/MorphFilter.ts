@@ -1,13 +1,13 @@
 import { Filter as PixiFilter } from 'pixi.js'
 import { Filter } from '../base/Filter'
 import type { FilterControl } from '../../types'
-import { MorphAppShader } from './shaders'
+import { MorphShader } from './shaders'
 
-export class MorphAppFilter extends Filter {
+export class MorphFilter extends Filter {
   private morphFilter?: PixiFilter
   
   getName(): string {
-    return 'MorphApp'
+    return 'Morph'
   }
   
   getDefaultControls(): FilterControl[] {
@@ -26,7 +26,7 @@ export class MorphAppFilter extends Filter {
   }
   
   createFilter(): PixiFilter {
-    // Create a basic filter for now (MorphApp needs special handling for two images)
+    // Create a basic filter for now (Morph needs special handling for two images)
     const filter = new PixiFilter({
       gpuProgram: null,
       glProgram: null,
@@ -34,7 +34,7 @@ export class MorphAppFilter extends Filter {
     } as any)
     
     // Set shader and uniforms
-    ;(filter as any).fragment = MorphAppShader
+    ;(filter as any).fragment = MorphShader
     ;(filter as any).uniforms = {
       morphAmount: 0
     }
