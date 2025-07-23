@@ -37,9 +37,15 @@ export function FeaturePointSelector({
   // Draw images and points with animation
   useEffect(() => {
     // Ensure both images are loaded before drawing
-    if (!sourceImage || !targetImage || !canvasesReady) return
+    if (!sourceImage || !targetImage || !canvasesReady) {
+      return
+    }
     
     const isMobile = window.innerWidth < 768
+    
+    // Always draw the canvases at least once
+    drawCanvas('source')
+    drawCanvas('target')
     
     if (isMobile && (featurePoints.length > 0 || tempPoint)) {
       // Animate on mobile for better visibility
@@ -52,10 +58,6 @@ export function FeaturePointSelector({
       const animId = requestAnimationFrame(animate)
       
       return () => cancelAnimationFrame(animId)
-    } else {
-      // Static drawing on desktop
-      drawCanvas('source')
-      drawCanvas('target')
     }
   }, [sourceImage, targetImage, featurePoints, selectedPointId, tempPoint, canvasesReady])
   
@@ -69,9 +71,15 @@ export function FeaturePointSelector({
     }
     
     const ctx = canvas.getContext('2d')!
+    if (!ctx) {
+      console.error(`Failed to get 2d context for ${side} canvas`)
+      return
+    }
+    
+    // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height)
     
-    // Draw image
+    // Draw image to fit canvas
     ctx.drawImage(image, 0, 0, canvas.width, canvas.height)
     
     // Determine point size based on screen size
@@ -387,8 +395,13 @@ export function FeaturePointSelector({
               height={sourceImage?.height || 300}
               onClick={(e) => handleCanvasClick(e, 'source')}
               onTouchStart={(e) => handleCanvasClick(e, 'source')}
-              className="w-full h-auto cursor-crosshair touch-none"
-              style={{ maxHeight: '200px' }}
+              className="cursor-crosshair touch-none"
+              style={{ 
+                width: '100%',
+                height: 'auto',
+                maxHeight: '200px',
+                display: 'block'
+              }}
             />
           </div>
         </div>
@@ -404,8 +417,13 @@ export function FeaturePointSelector({
               height={targetImage?.height || 300}
               onClick={(e) => handleCanvasClick(e, 'target')}
               onTouchStart={(e) => handleCanvasClick(e, 'target')}
-              className="w-full h-auto cursor-crosshair touch-none"
-              style={{ maxHeight: '200px' }}
+              className="cursor-crosshair touch-none"
+              style={{ 
+                width: '100%',
+                height: 'auto',
+                maxHeight: '200px',
+                display: 'block'
+              }}
             />
           </div>
         </div>
